@@ -1,17 +1,20 @@
 import { useCardStore } from "@/store/cardStore";
 import { FlipAnimation } from "@/components/CardPreview/FlipAnimation";
+import { CardActions } from "@/components/CardPreview/CardActions";
 import { FrontFields } from "@/components/LeftPane/FrontFields";
 import { BackFields } from "@/components/LeftPane/BackFields";
 import { DesignControls } from "@/components/RightPane/DesignControls";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Moon, Sun } from "lucide-react";
+import { BookmarkCheck, Moon, Sun } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const { cardData, toggleFlip } = useCardStore();
+  const { cardData } = useCardStore();
   const { isFlipped } = cardData;
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -46,11 +49,11 @@ const Index = () => {
             
             <Button
               size="default"
-              onClick={toggleFlip}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+              onClick={() => navigate("/profile")}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground gap-2"
             >
-              <RotateCw className="w-4 h-4 mr-2" />
-              Flip Card
+              <BookmarkCheck className="w-4 h-4" />
+              Saved Cards
             </Button>
           </div>
         </div>
@@ -88,10 +91,11 @@ const Index = () => {
         </div>
 
         {/* Center - Preview */}
-        <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
+        <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto relative">
           <div className="flex flex-col items-center space-y-6">
-            <div className="card-preview-container">
+            <div className="card-preview-container relative">
               <FlipAnimation />
+              <CardActions />
             </div>
             
             <div className="text-center">
