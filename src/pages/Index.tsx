@@ -1,30 +1,49 @@
-import { useCardStore } from "@/store/cardStore";
-import { FlipAnimation } from "@/components/CardPreview/FlipAnimation";
-import { CardActions } from "@/components/CardPreview/CardActions";
-import { FrontFields } from "@/components/LeftPane/FrontFields";
-import { BackFields } from "@/components/LeftPane/BackFields";
-import { DesignControls } from "@/components/RightPane/DesignControls";
+import { useState, useEffect } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Moon, Sun, ChevronLeft, ChevronRight, Calendar, BarChart3, Settings, ChevronUp, ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
+import { Moon, Sun, Eye, Palette } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useSavedCardsStore, SavedCard } from "@/store/savedCardsStore";
+import { ViewCardModal } from "@/components/Profile/ViewCardModal";
 import Dock from "@/components/Dock/Dock";
-import { SavedCardsList } from "@/components/Profile/SavedCardsList";
+import { Calendar, BarChart3, Settings, ChevronUp, ChevronDown, LayoutGrid } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { DefaultsSheet } from "@/components/Profile/DefaultsSheet";
 
 const Index = () => {
-  const { cardData } = useCardStore();
-  const { isFlipped } = cardData;
   const { theme, setTheme } = useTheme();
-  const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const { savedCards } = useSavedCardsStore();
+  const navigate = useNavigate();
+  const [selectedCardId, setSelectedCardId] = useState<string>("");
+  const [coloredQR, setColoredQR] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
   const [showDock, setShowDock] = useState(true);
-  const [showHidden, setShowHidden] = useState(false);
   const [showDefaults, setShowDefaults] = useState(false);
 
+  // Get visible cards (not hidden)
+  const visibleCards = savedCards.filter(card => !card.hidden);
+
+  // Set default card on load
+  useEffect(() => {
+    if (visibleCards.length > 0 && !selectedCardId) {
+      setSelectedCardId(visibleCards[0].id);
+    }
+  }, [visibleCards, selectedCardId]);
+
+  const selectedCard = savedCards.find(card => card.id === selectedCardId);
+  const qrCodeUrl = selectedCard 
+    ? `${window.location.origin}/profile/${selectedCard.id}`
+    : "";
+
   const dockItems = [
+    { 
+      icon: <LayoutGrid size={20} />, 
+      label: 'Cards', 
+      onClick: () => navigate('/cards')
+    },
     { 
       icon: <Calendar size={20} />, 
       label: 'Events', 
@@ -55,7 +74,7 @@ const Index = () => {
               <h1 className="text-base md:text-lg font-semibold text-foreground">
                 Networking Co-pilot
               </h1>
-              <p className="text-xs text-muted-foreground hidden md:block">Profile Card Builder</p>
+              <p className="text-xs text-muted-foreground hidden md:block">QR Code Access</p>
             </div>
           </div>
           
@@ -74,172 +93,133 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Tabs Navigation */}
-      <Tabs defaultValue="builder" className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex justify-center border-b border-border bg-card px-4">
-          <TabsList className="bg-transparent">
-            <TabsTrigger value="builder">Builder</TabsTrigger>
-            <TabsTrigger value="saved-cards">Saved Cards</TabsTrigger>
-          </TabsList>
-        </div>
-
-        {/* Builder Tab */}
-        <TabsContent value="builder" className="flex-1 flex overflow-hidden m-0 data-[state=inactive]:hidden">
-          <div className="flex-1 flex overflow-hidden relative">
-        {/* Left Pane - Text Editor */}
-        <motion.div
-          initial={false}
-          animate={{ 
-            width: leftCollapsed ? 0 : 320,
-            marginLeft: leftCollapsed ? -320 : 0 
-          }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="flex-shrink-0 border-r border-border bg-card overflow-hidden hidden md:block relative"
-        >
-          {/* Left Panel Toggle Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 z-10 h-6 w-6 hover:bg-muted"
-            onClick={() => setLeftCollapsed(!leftCollapsed)}
-          >
-            <ChevronLeft className="h-3 w-3" />
-          </Button>
-
-          <div className="w-80 h-full overflow-y-auto">
-            <div className="p-6">
-              <AnimatePresence mode="wait">
-                {!isFlipped ? (
-                  <motion.div
-                    key="front"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <FrontFields />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="back"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <BackFields />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          {/* Card Selector */}
+          <div className="flex justify-end mb-8">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground hidden sm:inline">Select Profile:</span>
+              <Select value={selectedCardId} onValueChange={setSelectedCardId}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Choose a card" />
+                </SelectTrigger>
+                <SelectContent>
+                  {visibleCards.map((card) => (
+                    <SelectItem key={card.id} value={card.id}>
+                      {card.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        </motion.div>
 
-        {/* Left Panel Expand Button (when collapsed) */}
-        {leftCollapsed && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute left-2 top-2 z-10 h-6 w-6 hover:bg-muted hidden md:flex"
-            onClick={() => setLeftCollapsed(false)}
-          >
-            <ChevronRight className="h-3 w-3" />
-          </Button>
-        )}
+          {selectedCard ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-8"
+            >
+              {/* QR Code Display */}
+              <Card className="p-8 md:p-12 bg-card border-border">
+                <div className="flex flex-col items-center space-y-6">
+                  <div className="text-center space-y-2">
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+                      {selectedCard.title}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Scan to view digital profile card
+                    </p>
+                  </div>
 
-        {/* Center - Preview */}
-        <div className="flex-1 flex flex-col p-8 overflow-y-auto relative">
-          <div className="flex justify-end mb-4">
-            <CardActions />
-          </div>
-          
-          <div className="flex-1 flex items-center justify-center">
-            <div className="flex flex-col items-center space-y-6">
-              <div className="card-preview-container">
-                <FlipAnimation />
-              </div>
-              
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">
-                  Currently viewing: <span className="font-medium text-foreground">
-                    {isFlipped ? 'Back Side' : 'Front Side'}
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+                  {/* QR Code with Logo */}
+                  <div className="relative p-8 bg-white rounded-2xl shadow-lg">
+                    <QRCodeSVG
+                      value={qrCodeUrl}
+                      size={280}
+                      level="H"
+                      includeMargin={true}
+                      fgColor={coloredQR ? "hsl(var(--accent))" : "#000000"}
+                      bgColor="#ffffff"
+                      imageSettings={{
+                        src: "",
+                        height: 50,
+                        width: 50,
+                        excavate: true,
+                      }}
+                    />
+                    {/* App Logo in Center */}
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shadow-md border-4 border-white">
+                      <span className="text-white font-bold text-lg">NC</span>
+                    </div>
+                  </div>
 
-        {/* Right Panel Expand Button (when collapsed) */}
-        {rightCollapsed && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-2 top-2 z-10 h-6 w-6 hover:bg-muted hidden md:flex"
-            onClick={() => setRightCollapsed(false)}
-          >
-            <ChevronLeft className="h-3 w-3" />
-          </Button>
-        )}
+                  {/* QR Code Controls */}
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant={coloredQR ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setColoredQR(true)}
+                      className="gap-2"
+                    >
+                      <Palette className="h-4 w-4" />
+                      Colored
+                    </Button>
+                    <Button
+                      variant={!coloredQR ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setColoredQR(false)}
+                      className="gap-2"
+                    >
+                      Grayscale
+                    </Button>
+                  </div>
 
-        {/* Right Pane - Images & Colors */}
-        <motion.div
-          initial={false}
-          animate={{ 
-            width: rightCollapsed ? 0 : 320,
-            marginRight: rightCollapsed ? -320 : 0 
-          }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="flex-shrink-0 border-l border-border bg-card overflow-hidden hidden md:block relative"
-        >
-          {/* Right Panel Toggle Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 left-2 z-10 h-6 w-6 hover:bg-muted"
-            onClick={() => setRightCollapsed(!rightCollapsed)}
-          >
-            <ChevronRight className="h-3 w-3" />
-          </Button>
-
-          <div className="w-80 h-full overflow-y-auto">
-            <div className="p-6">
-              <DesignControls />
-            </div>
-          </div>
-        </motion.div>
-          </div>
-        </TabsContent>
-
-        {/* Saved Cards Tab */}
-        <TabsContent value="saved-cards" className="flex-1 overflow-hidden m-0 data-[state=inactive]:hidden">
-          <div className="h-full overflow-y-auto">
-            <div className="container mx-auto px-4 py-6">
-              <div className="flex justify-end mb-6">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant={showHidden ? "secondary" : "outline"}
-                    onClick={() => setShowHidden(!showHidden)}
-                    size="sm"
-                  >
-                    {showHidden ? "Hide Hidden" : "Show Hidden"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowDefaults(true)}
-                    className="gap-2"
-                    size="sm"
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span className="hidden sm:inline">Default Settings</span>
-                  </Button>
+                  {/* URL Display */}
+                  <div className="w-full max-w-md p-3 bg-muted rounded-lg">
+                    <p className="text-xs text-center text-muted-foreground font-mono break-all">
+                      {qrCodeUrl}
+                    </p>
+                  </div>
                 </div>
+              </Card>
+
+              {/* Preview Button */}
+              <div className="flex justify-center">
+                <Button
+                  size="lg"
+                  onClick={() => setShowPreview(true)}
+                  className="gap-2"
+                >
+                  <Eye className="h-5 w-5" />
+                  Preview Profile Card
+                </Button>
               </div>
-              <SavedCardsList showHidden={showHidden} />
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+            </motion.div>
+          ) : (
+            <Card className="p-12 bg-card border-border">
+              <div className="text-center space-y-4">
+                <p className="text-muted-foreground">
+                  No profile cards available. Create one in the Cards section.
+                </p>
+                <Button onClick={() => navigate('/cards')}>
+                  Go to Cards
+                </Button>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Preview Modal */}
+      {selectedCard && (
+        <ViewCardModal
+          open={showPreview}
+          onOpenChange={setShowPreview}
+          cardData={selectedCard.cardData}
+        />
+      )}
 
       {/* Defaults Sheet */}
       <DefaultsSheet open={showDefaults} onOpenChange={setShowDefaults} />
