@@ -5,7 +5,7 @@ import { FrontFields } from "@/components/LeftPane/FrontFields";
 import { BackFields } from "@/components/LeftPane/BackFields";
 import { DesignControls } from "@/components/RightPane/DesignControls";
 import { Button } from "@/components/ui/button";
-import { BookmarkCheck, Moon, Sun, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { BookmarkCheck, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
@@ -18,11 +18,6 @@ const Index = () => {
   const navigate = useNavigate();
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
-  const [zoom, setZoom] = useState(1);
-
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 1.5));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
-  const handleResetZoom = () => setZoom(1);
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -77,8 +72,18 @@ const Index = () => {
             marginLeft: leftCollapsed ? -320 : 0 
           }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="flex-shrink-0 border-r border-border bg-card overflow-hidden hidden md:block"
+          className="flex-shrink-0 border-r border-border bg-card overflow-hidden hidden md:block relative"
         >
+          {/* Left Panel Toggle Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 z-10 h-6 w-6 hover:bg-muted"
+            onClick={() => setLeftCollapsed(!leftCollapsed)}
+          >
+            <ChevronLeft className="h-3 w-3" />
+          </Button>
+
           <div className="w-80 h-full overflow-y-auto">
             <div className="p-6">
               <AnimatePresence mode="wait">
@@ -108,64 +113,29 @@ const Index = () => {
           </div>
         </motion.div>
 
-        {/* Left Panel Toggle Button */}
-        <Button
-          variant="secondary"
-          size="icon"
-          className="absolute left-0 top-4 z-10 hidden md:flex shadow-lg"
-          onClick={() => setLeftCollapsed(!leftCollapsed)}
-          style={{ left: leftCollapsed ? '0' : '320px' }}
-        >
-          {leftCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </Button>
+        {/* Left Panel Expand Button (when collapsed) */}
+        {leftCollapsed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute left-2 top-2 z-10 h-6 w-6 hover:bg-muted hidden md:flex"
+            onClick={() => setLeftCollapsed(false)}
+          >
+            <ChevronRight className="h-3 w-3" />
+          </Button>
+        )}
 
         {/* Center - Preview */}
         <div className="flex-1 flex flex-col p-4 md:p-8 overflow-y-auto relative">
-          <div className="flex justify-between items-center mb-4 gap-2">
-            {/* Zoom Controls */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleZoomOut}
-                disabled={zoom <= 0.5}
-                className="h-8 w-8"
-              >
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <span className="text-xs font-mono min-w-[3rem] text-center">{Math.round(zoom * 100)}%</span>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleZoomIn}
-                disabled={zoom >= 1.5}
-                className="h-8 w-8"
-              >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleResetZoom}
-                className="h-8 w-8"
-                title="Reset zoom"
-              >
-                <Maximize2 className="h-4 w-4" />
-              </Button>
-            </div>
-
+          <div className="flex justify-end mb-4">
             <CardActions />
           </div>
           
           <div className="flex-1 flex items-center justify-center">
             <div className="flex flex-col items-center space-y-4 md:space-y-6">
-              <motion.div 
-                className="card-preview-container"
-                animate={{ scale: zoom }}
-                transition={{ duration: 0.2 }}
-              >
+              <div className="card-preview-container">
                 <FlipAnimation />
-              </motion.div>
+              </div>
               
               <div className="text-center">
                 <p className="text-xs md:text-sm text-muted-foreground">
@@ -178,16 +148,17 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Right Panel Toggle Button */}
-        <Button
-          variant="secondary"
-          size="icon"
-          className="absolute right-0 top-4 z-10 hidden md:flex shadow-lg"
-          onClick={() => setRightCollapsed(!rightCollapsed)}
-          style={{ right: rightCollapsed ? '0' : '320px' }}
-        >
-          {rightCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </Button>
+        {/* Right Panel Expand Button (when collapsed) */}
+        {rightCollapsed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-2 top-2 z-10 h-6 w-6 hover:bg-muted hidden md:flex"
+            onClick={() => setRightCollapsed(false)}
+          >
+            <ChevronLeft className="h-3 w-3" />
+          </Button>
+        )}
 
         {/* Right Pane - Images & Colors */}
         <motion.div
@@ -197,8 +168,18 @@ const Index = () => {
             marginRight: rightCollapsed ? -320 : 0 
           }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="flex-shrink-0 border-l border-border bg-card overflow-hidden hidden md:block"
+          className="flex-shrink-0 border-l border-border bg-card overflow-hidden hidden md:block relative"
         >
+          {/* Right Panel Toggle Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 left-2 z-10 h-6 w-6 hover:bg-muted"
+            onClick={() => setRightCollapsed(!rightCollapsed)}
+          >
+            <ChevronRight className="h-3 w-3" />
+          </Button>
+
           <div className="w-80 h-full overflow-y-auto">
             <div className="p-6">
               <DesignControls />
