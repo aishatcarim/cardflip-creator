@@ -126,19 +126,19 @@ const Index = () => {
         )}
 
         {/* Center - Preview */}
-        <div className="flex-1 flex flex-col p-4 md:p-8 overflow-y-auto relative">
+        <div className="flex-1 flex flex-col p-8 overflow-y-auto relative">
           <div className="flex justify-end mb-4">
             <CardActions />
           </div>
           
           <div className="flex-1 flex items-center justify-center">
-            <div className="flex flex-col items-center space-y-4 md:space-y-6">
+            <div className="flex flex-col items-center space-y-6">
               <div className="card-preview-container">
                 <FlipAnimation />
               </div>
               
               <div className="text-center">
-                <p className="text-xs md:text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Currently viewing: <span className="font-medium text-foreground">
                     {isFlipped ? 'Back Side' : 'Front Side'}
                   </span>
