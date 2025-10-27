@@ -5,29 +5,26 @@ import { FrontFields } from "@/components/LeftPane/FrontFields";
 import { BackFields } from "@/components/LeftPane/BackFields";
 import { DesignControls } from "@/components/RightPane/DesignControls";
 import { Button } from "@/components/ui/button";
-import { BookmarkCheck, Moon, Sun, ChevronLeft, ChevronRight, User, Calendar, BarChart3, Settings, ChevronUp, ChevronDown } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Moon, Sun, ChevronLeft, ChevronRight, Calendar, BarChart3, Settings, ChevronUp, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Dock from "@/components/Dock/Dock";
+import { SavedCardsList } from "@/components/Profile/SavedCardsList";
+import { DefaultsSheet } from "@/components/Profile/DefaultsSheet";
 
 const Index = () => {
   const { cardData } = useCardStore();
   const { isFlipped } = cardData;
   const { theme, setTheme } = useTheme();
-  const navigate = useNavigate();
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [showDock, setShowDock] = useState(true);
-
+  const [showHidden, setShowHidden] = useState(false);
+  const [showDefaults, setShowDefaults] = useState(false);
 
   const dockItems = [
-    { 
-      icon: <User size={20} />, 
-      label: 'Profile', 
-      onClick: () => navigate('/profile') 
-    },
     { 
       icon: <Calendar size={20} />, 
       label: 'Events', 
@@ -41,7 +38,7 @@ const Index = () => {
     { 
       icon: <Settings size={20} />, 
       label: 'Settings', 
-      onClick: () => console.log('Settings - Coming soon!') 
+      onClick: () => setShowDefaults(true) 
     },
   ];
 
@@ -62,34 +59,33 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-2 md:gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="rounded-lg"
-            >
-              {theme === "dark" ? (
-                <Sun className="h-4 w-4 md:h-5 md:w-5" />
-              ) : (
-                <Moon className="h-4 w-4 md:h-5 md:w-5" />
-              )}
-            </Button>
-            
-            <Button
-              size="sm"
-              onClick={() => navigate("/profile")}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground gap-2"
-            >
-              <BookmarkCheck className="w-4 h-4" />
-              <span className="hidden sm:inline">Saved Cards</span>
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="rounded-lg"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4 md:h-5 md:w-5" />
+            ) : (
+              <Moon className="h-4 w-4 md:h-5 md:w-5" />
+            )}
+          </Button>
         </div>
       </header>
 
-      {/* Main Layout */}
-      <div className="flex-1 flex overflow-hidden relative">
+      {/* Tabs Navigation */}
+      <Tabs defaultValue="builder" className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex justify-center border-b border-border bg-card px-4">
+          <TabsList className="bg-transparent">
+            <TabsTrigger value="builder">Builder</TabsTrigger>
+            <TabsTrigger value="saved-cards">Saved Cards</TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Builder Tab */}
+        <TabsContent value="builder" className="flex-1 flex overflow-hidden m-0 data-[state=inactive]:hidden">
+          <div className="flex-1 flex overflow-hidden relative">
         {/* Left Pane - Text Editor */}
         <motion.div
           initial={false}
@@ -212,7 +208,41 @@ const Index = () => {
             </div>
           </div>
         </motion.div>
-      </div>
+          </div>
+        </TabsContent>
+
+        {/* Saved Cards Tab */}
+        <TabsContent value="saved-cards" className="flex-1 overflow-hidden m-0 data-[state=inactive]:hidden">
+          <div className="h-full overflow-y-auto">
+            <div className="container mx-auto px-4 py-6">
+              <div className="flex justify-end mb-6">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={showHidden ? "secondary" : "outline"}
+                    onClick={() => setShowHidden(!showHidden)}
+                    size="sm"
+                  >
+                    {showHidden ? "Hide Hidden" : "Show Hidden"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDefaults(true)}
+                    className="gap-2"
+                    size="sm"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span className="hidden sm:inline">Default Settings</span>
+                  </Button>
+                </div>
+              </div>
+              <SavedCardsList showHidden={showHidden} />
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Defaults Sheet */}
+      <DefaultsSheet open={showDefaults} onOpenChange={setShowDefaults} />
 
       {/* Dock Navigation */}
       <AnimatePresence>
