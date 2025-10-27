@@ -21,6 +21,8 @@ export const CardBack = () => {
     companyLogo,
     backgroundColor,
     backLayoutStyle,
+    textColor,
+    accentColor,
   } = cardData;
 
   return (
@@ -32,7 +34,7 @@ export const CardBack = () => {
     >
       {/* Bio Section */}
       <div className="mb-6">
-        <p className="text-sm text-foreground leading-relaxed">
+        <p className="text-sm leading-relaxed" style={{ color: textColor }}>
           {bio}
         </p>
       </div>
@@ -40,10 +42,10 @@ export const CardBack = () => {
       {/* Interests */}
       {interests.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-xs font-medium text-muted-foreground mb-2">INTERESTS</h3>
+          <h3 className="text-xs font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>INTERESTS</h3>
           <div className="flex flex-wrap gap-2">
             {interests.map((interest, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
+              <Badge key={index} variant="secondary" className="text-xs" style={{ color: textColor }}>
                 {interest}
               </Badge>
             ))}
@@ -55,13 +57,13 @@ export const CardBack = () => {
       {(email || phone) && (
         <div className="mb-6 space-y-2">
           {email && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs" style={{ color: textColor, opacity: 0.7 }}>
               <Mail className="w-3 h-3" />
               <span>{email}</span>
             </div>
           )}
           {phone && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs" style={{ color: textColor, opacity: 0.7 }}>
               <Phone className="w-3 h-3" />
               <span>{phone}</span>
             </div>
@@ -72,13 +74,13 @@ export const CardBack = () => {
       {/* Quick Links */}
       {quickLinks.length > 0 && (
         <div className="mb-auto">
-          <h3 className="text-xs font-medium text-muted-foreground mb-2">CONNECT</h3>
+          <h3 className="text-xs font-medium mb-2" style={{ color: textColor, opacity: 0.7 }}>CONNECT</h3>
           <div className="space-y-2">
             {quickLinks.map((link, index) => {
               const Icon = iconMap[link.icon] || Globe;
               return (
-                <div key={index} className="flex items-center gap-2 text-xs text-foreground">
-                  <Icon className="w-3 h-3" />
+                <div key={index} className="flex items-center gap-2 text-xs" style={{ color: textColor }}>
+                  <Icon className="w-3 h-3" style={{ color: textColor }} />
                   <span className="truncate">{link.url}</span>
                 </div>
               );
@@ -90,7 +92,7 @@ export const CardBack = () => {
       {/* CTA */}
       {ctaText && (
         <div className="mt-4">
-          <p className="text-xs text-center font-medium text-accent italic">
+          <p className="text-xs text-center font-medium italic" style={{ color: accentColor }}>
             {ctaText}
           </p>
         </div>
@@ -105,7 +107,7 @@ export const CardBack = () => {
             className="h-6 object-contain opacity-50"
           />
         ) : (
-          <p className="text-xs text-muted-foreground tracking-[0.2em]">
+          <p className="text-xs tracking-[0.2em]" style={{ color: textColor, opacity: 0.5 }}>
             {companyName}
           </p>
         )}
