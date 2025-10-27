@@ -6,13 +6,19 @@ import { useState } from "react";
 import { SaveCardDialog } from "@/components/SaveCardDialog";
 
 export const CardActions = () => {
-  const { toggleFlip, editingCardId } = useCardStore();
+  const { toggleFlip, editingCardId, cloneSourceTitle } = useCardStore();
   const { savedCards } = useSavedCardsStore();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
 
   const editingCard = editingCardId 
     ? savedCards.find(card => card.id === editingCardId)
     : null;
+
+  const getSaveButtonTitle = () => {
+    if (editingCardId) return "Update card";
+    if (cloneSourceTitle) return "Save cloned card";
+    return "Save card";
+  };
 
   return (
     <>
@@ -31,7 +37,7 @@ export const CardActions = () => {
           size="icon"
           onClick={() => setShowSaveDialog(true)}
           className="shadow-lg"
-          title={editingCardId ? "Update card" : "Save card"}
+          title={getSaveButtonTitle()}
         >
           <Save className="h-4 w-4" />
         </Button>

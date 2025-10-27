@@ -50,10 +50,12 @@ export interface CardData {
 interface CardStore {
   cardData: CardData;
   editingCardId: string | null;
+  cloneSourceTitle: string | null;
   updateCardData: (updates: Partial<CardData>) => void;
   toggleFlip: () => void;
   resetCard: () => void;
   loadCardData: (cardData: CardData, cardId?: string) => void;
+  loadCardDataForClone: (cardData: CardData, sourceTitle: string) => void;
   addInterest: (interest: string) => void;
   removeInterest: (interest: string) => void;
   addQuickLink: (link: { label: string; url: string; icon: string }) => void;
@@ -107,6 +109,7 @@ const defaultCardData: CardData = {
 export const useCardStore = create<CardStore>((set) => ({
   cardData: defaultCardData,
   editingCardId: null,
+  cloneSourceTitle: null,
   
   updateCardData: (updates) =>
     set((state) => ({
@@ -119,10 +122,13 @@ export const useCardStore = create<CardStore>((set) => ({
     })),
   
   resetCard: () =>
-    set({ cardData: defaultCardData, editingCardId: null }),
+    set({ cardData: defaultCardData, editingCardId: null, cloneSourceTitle: null }),
 
   loadCardData: (cardData, cardId) =>
-    set({ cardData: { ...cardData, isFlipped: false }, editingCardId: cardId || null }),
+    set({ cardData: { ...cardData, isFlipped: false }, editingCardId: cardId || null, cloneSourceTitle: null }),
+
+  loadCardDataForClone: (cardData, sourceTitle) =>
+    set({ cardData: { ...cardData, isFlipped: false }, editingCardId: null, cloneSourceTitle: sourceTitle }),
   
   addInterest: (interest) =>
     set((state) => ({

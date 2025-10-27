@@ -16,10 +16,13 @@ interface SaveCardDialogProps {
 }
 
 export const SaveCardDialog = ({ open, onOpenChange, editingCard }: SaveCardDialogProps) => {
-  const { cardData, editingCardId, resetCard } = useCardStore();
+  const { cardData, editingCardId, cloneSourceTitle, resetCard } = useCardStore();
   const { saveCard, updateCard } = useSavedCardsStore();
   
   const generateTitle = () => {
+    if (cloneSourceTitle) {
+      return `${cloneSourceTitle} - Clone`;
+    }
     const date = new Date().toLocaleDateString();
     return `${cardData.fullName} - ${date}`;
   };
@@ -29,7 +32,7 @@ export const SaveCardDialog = ({ open, onOpenChange, editingCard }: SaveCardDial
   const [tagInput, setTagInput] = useState("");
   const [event, setEvent] = useState("");
 
-  // Update form when editing card changes
+  // Update form when editing card changes or when cloning
   useEffect(() => {
     if (open) {
       if (editingCard) {
@@ -42,7 +45,7 @@ export const SaveCardDialog = ({ open, onOpenChange, editingCard }: SaveCardDial
         setEvent("");
       }
     }
-  }, [open, editingCard]);
+  }, [open, editingCard, cloneSourceTitle]);
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {

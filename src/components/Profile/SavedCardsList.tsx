@@ -41,12 +41,10 @@ export const SavedCardsList = ({ showHidden }: SavedCardsListProps) => {
 
   const handleClone = (card: SavedCard) => {
     const clonedData = { ...card.cardData };
-    loadCardData(clonedData);
+    const { loadCardDataForClone } = useCardStore.getState();
+    loadCardDataForClone(clonedData, card.title);
     navigate("/");
-    // Store the clone title for the save dialog
-    setTimeout(() => {
-      toast.success(`Cloning "${card.title}". Click Save to create a new version.`);
-    }, 100);
+    toast.success(`Cloning "${card.title}"`);
   };
 
   const handleHide = (card: SavedCard) => {
