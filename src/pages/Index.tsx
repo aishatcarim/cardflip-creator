@@ -5,11 +5,12 @@ import { FrontFields } from "@/components/LeftPane/FrontFields";
 import { BackFields } from "@/components/LeftPane/BackFields";
 import { DesignControls } from "@/components/RightPane/DesignControls";
 import { Button } from "@/components/ui/button";
-import { BookmarkCheck, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookmarkCheck, Moon, Sun, ChevronLeft, ChevronRight, User, Calendar, BarChart3, Settings, ChevronUp, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import Dock from "@/components/Dock/Dock";
 
 const Index = () => {
   const { cardData } = useCardStore();
@@ -18,6 +19,31 @@ const Index = () => {
   const navigate = useNavigate();
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [showDock, setShowDock] = useState(true);
+
+
+  const dockItems = [
+    { 
+      icon: <User size={20} />, 
+      label: 'Profile', 
+      onClick: () => navigate('/profile') 
+    },
+    { 
+      icon: <Calendar size={20} />, 
+      label: 'Events', 
+      onClick: () => console.log('Events - Coming soon!') 
+    },
+    { 
+      icon: <BarChart3 size={20} />, 
+      label: 'Analytics', 
+      onClick: () => console.log('Analytics - Coming soon!') 
+    },
+    { 
+      icon: <Settings size={20} />, 
+      label: 'Settings', 
+      onClick: () => console.log('Settings - Coming soon!') 
+    },
+  ];
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -187,6 +213,38 @@ const Index = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Dock Navigation */}
+      <AnimatePresence>
+        {showDock && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none"
+          >
+            <div className="pointer-events-auto">
+              <Dock 
+                items={dockItems}
+                panelHeight={68}
+                baseItemSize={50}
+                magnification={70}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Dock Toggle Button */}
+      <Button
+        variant="secondary"
+        size="icon"
+        className="fixed bottom-4 right-4 z-50 rounded-full shadow-lg h-12 w-12"
+        onClick={() => setShowDock(!showDock)}
+      >
+        {showDock ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+      </Button>
     </div>
   );
 };
