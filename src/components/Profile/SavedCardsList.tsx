@@ -1,89 +1,162 @@
-import { useSavedCardsStore } from "@/store/savedCardsStore";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { useSavedCardsStore, SavedCard } from "@/store/savedCardsStore";
+import { useCardStore } from "@/store/cardStore";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, Calendar, Tag } from "lucide-react";
-import { format } from "date-fns";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical, Eye, Edit, Copy, EyeOff, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { MiniCard } from "./MiniCard";
+import { ViewCardModal } from "./ViewCardModal";
 
-export const SavedCardsList = () => {
-  const { savedCards, deleteCard } = useSavedCardsStore();
+interface SavedCardsListProps {
+  showHidden: boolean;
+}
+
+export const SavedCardsList = ({ showHidden }: SavedCardsListProps) => {
+  const { savedCards, deleteCard, hideCard } = useSavedCardsStore();
+  const { loadCardData } = useCardStore();
+  const navigate = useNavigate();
+  const [viewingCard, setViewingCard] = useState<SavedCard | null>(null);
+
+  const filteredCards = showHidden 
+    ? savedCards 
+    : savedCards.filter(card => !card.hidden);
+
+  const handleView = (card: SavedCard) => {
+    setViewingCard(card);
+  };
+
+  const handleEdit = (card: SavedCard) => {
+    loadCardData(card.cardData, card.id);
+    navigate("/");
+  };
+
+  const handleClone = (card: SavedCard) => {
+    const clonedData = { ...card.cardData };
+    loadCardData(clonedData);
+    navigate("/");
+    // Store the clone title for the save dialog
+    setTimeout(() => {
+      toast.success(`Cloning "${card.title}". Click Save to create a new version.`);
+    }, 100);
+  };
+
+  const handleHide = (card: SavedCard) => {
+    hideCard(card.id, !card.hidden);
+    toast.success(card.hidden ? "Card unhidden" : "Card hidden");
+  };
 
   const handleDelete = (id: string, title: string) => {
-    if (confirm(`Delete "${title}"?`)) {
+    if (confirm(`Delete "${title}"? This action cannot be undone.`)) {
       deleteCard(id);
       toast.success("Card deleted");
     }
   };
 
-  if (savedCards.length === 0) {
+  if (filteredCards.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No saved cards yet</p>
+        <p className="text-muted-foreground">
+          {showHidden ? "No saved cards yet" : "No visible cards"}
+        </p>
         <p className="text-sm text-muted-foreground mt-2">
-          Save your first card from the editor
+          {showHidden ? "Save your first card from the editor" : "Toggle 'Show Hidden' to see hidden cards"}
         </p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {savedCards.map((card) => (
-        <Card key={card.id} className="relative group">
-          <CardHeader>
-            <CardTitle className="text-lg">{card.title}</CardTitle>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>{format(new Date(card.createdAt), "MMM dd, yyyy 'at' h:mm a")}</span>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {/* Card Preview Info */}
-            <div className="text-sm">
-              <p className="font-medium">{card.cardData.fullName}</p>
-              <p className="text-muted-foreground">{card.cardData.role}</p>
-              <p className="text-muted-foreground">{card.cardData.companyName}</p>
-            </div>
-
-            {/* Event */}
-            {card.event && (
-              <div className="text-sm">
-                <span className="font-medium">Event: </span>
-                <span className="text-muted-foreground">{card.event}</span>
-              </div>
-            )}
-
-            {/* Tags */}
-            {card.tags.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Tag className="h-3 w-3" />
-                  <span>Tags</span>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {filteredCards.map((card) => (
+          <Card key={card.id} className="relative group overflow-hidden">
+            <CardContent className="p-0">
+              <div className="relative">
+                {/* Card Preview */}
+                <div className="p-4">
+                  <MiniCard 
+                    cardData={card.cardData}
+                    onClick={() => handleView(card)}
+                  />
                 </div>
-                <div className="flex flex-wrap gap-1">
-                  {card.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
+
+                {/* Menu Button */}
+                <div className="absolute top-2 right-2 z-10">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleView(card)}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        View
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEdit(card)}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleClone(card)}>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Clone
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleHide(card)}>
+                        <EyeOff className="h-4 w-4 mr-2" />
+                        {card.hidden ? "Unhide" : "Hide"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleDelete(card.id, card.title)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                {/* Card Info Overlay - appears on hover */}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/95 to-transparent p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                  <h3 className="font-semibold text-sm truncate mb-1">{card.title}</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(card.createdAt).toLocaleDateString()}
+                  </p>
+                  {card.event && (
+                    <p className="text-xs text-muted-foreground mt-1 truncate">
+                      📍 {card.event}
+                    </p>
+                  )}
                 </div>
               </div>
-            )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-            {/* Delete Button */}
-            <Button
-              variant="destructive"
-              size="sm"
-              className="w-full mt-4"
-              onClick={() => handleDelete(card.id, card.title)}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+      {/* View Modal */}
+      {viewingCard && (
+        <ViewCardModal
+          open={!!viewingCard}
+          onOpenChange={(open) => !open && setViewingCard(null)}
+          cardData={viewingCard.cardData}
+        />
+      )}
+    </>
   );
 };

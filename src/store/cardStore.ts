@@ -49,9 +49,11 @@ export interface CardData {
 
 interface CardStore {
   cardData: CardData;
+  editingCardId: string | null;
   updateCardData: (updates: Partial<CardData>) => void;
   toggleFlip: () => void;
   resetCard: () => void;
+  loadCardData: (cardData: CardData, cardId?: string) => void;
   addInterest: (interest: string) => void;
   removeInterest: (interest: string) => void;
   addQuickLink: (link: { label: string; url: string; icon: string }) => void;
@@ -104,6 +106,7 @@ const defaultCardData: CardData = {
 
 export const useCardStore = create<CardStore>((set) => ({
   cardData: defaultCardData,
+  editingCardId: null,
   
   updateCardData: (updates) =>
     set((state) => ({
@@ -116,7 +119,10 @@ export const useCardStore = create<CardStore>((set) => ({
     })),
   
   resetCard: () =>
-    set({ cardData: defaultCardData }),
+    set({ cardData: defaultCardData, editingCardId: null }),
+
+  loadCardData: (cardData, cardId) =>
+    set({ cardData: { ...cardData, isFlipped: false }, editingCardId: cardId || null }),
   
   addInterest: (interest) =>
     set((state) => ({

@@ -8,6 +8,7 @@ import { DefaultsSheet } from "@/components/Profile/DefaultsSheet";
 const Profile = () => {
   const navigate = useNavigate();
   const [showDefaults, setShowDefaults] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -30,21 +31,30 @@ const Profile = () => {
                 </p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowDefaults(true)}
-              className="gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              Default Settings
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={showHidden ? "secondary" : "outline"}
+                onClick={() => setShowHidden(!showHidden)}
+                size="sm"
+              >
+                {showHidden ? "Hide Hidden" : "Show Hidden"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowDefaults(true)}
+                className="gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Default Settings
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Content */}
       <main className="container mx-auto px-4 py-8">
-        <SavedCardsList />
+        <SavedCardsList showHidden={showHidden} />
       </main>
 
       {/* Defaults Sheet */}

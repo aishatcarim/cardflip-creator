@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,11 +12,12 @@ import { toast } from "sonner";
 interface SaveCardDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  editingCard?: { id: string; title: string; tags: string[]; event: string } | null;
 }
 
-export const SaveCardDialog = ({ open, onOpenChange }: SaveCardDialogProps) => {
-  const { cardData } = useCardStore();
-  const { saveCard } = useSavedCardsStore();
+export const SaveCardDialog = ({ open, onOpenChange, editingCard }: SaveCardDialogProps) => {
+  const { cardData, editingCardId, resetCard } = useCardStore();
+  const { saveCard, updateCard } = useSavedCardsStore();
   
   const generateTitle = () => {
     const date = new Date().toLocaleDateString();
@@ -27,6 +28,21 @@ export const SaveCardDialog = ({ open, onOpenChange }: SaveCardDialogProps) => {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [event, setEvent] = useState("");
+
+  // Update form when editing card changes
+  useEffect(() => {
+    if (open) {
+      if (editingCard) {
+        setTitle(editingCard.title);
+        setTags(editingCard.tags);
+        setEvent(editingCard.event);
+      } else {
+        setTitle(generateTitle());
+        setTags([]);
+        setEvent("");
+      }
+    }
+  }, [open, editingCard]);
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -40,14 +56,27 @@ export const SaveCardDialog = ({ open, onOpenChange }: SaveCardDialogProps) => {
   };
 
   const handleSave = () => {
-    saveCard({
-      title,
-      tags,
-      event,
-      cardData,
-    });
+    if (editingCardId || editingCard) {
+      // Update existing card
+      updateCard(editingCardId || editingCard!.id, {
+        title,
+        tags,
+        event,
+        cardData,
+      });
+      toast.success("Card updated successfully!");
+      resetCard();
+    } else {
+      // Save new card
+      saveCard({
+        title,
+        tags,
+        event,
+        cardData,
+      });
+      toast.success("Card saved successfully!");
+    }
     
-    toast.success("Card saved successfully!");
     onOpenChange(false);
     
     // Reset form
@@ -61,7 +90,9 @@ export const SaveCardDialog = ({ open, onOpenChange }: SaveCardDialogProps) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Save Profile Card</DialogTitle>
+          <DialogTitle>
+            {editingCardId || editingCard ? "Update Profile Card" : "Save Profile Card"}
+          </DialogTitle>
           <DialogDescription>
             Add details to organize and identify this card version
           </DialogDescription>
@@ -127,7 +158,9 @@ export const SaveCardDialog = ({ open, onOpenChange }: SaveCardDialogProps) => {
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>Save Card</Button>
+          <Button onClick={handleSave}>
+            {editingCardId || editingCard ? "Update Card" : "Save Card"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
