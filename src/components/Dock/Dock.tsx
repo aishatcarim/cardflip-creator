@@ -41,7 +41,7 @@ function DockItem({ children, className = '', onClick, mouseX, spring, distance,
       onFocus={() => isHovered.set(1)}
       onBlur={() => isHovered.set(0)}
       onClick={onClick}
-      className={`relative inline-flex items-center justify-center rounded-full bg-card border-border border-2 shadow-lg cursor-pointer hover:bg-accent/10 transition-colors ${className}`}
+      className={`relative inline-flex items-center justify-center rounded-lg bg-card/80 backdrop-blur-md border-border border shadow-lg cursor-pointer hover:bg-accent/20 transition-colors ${className}`}
       tabIndex={0}
       role="button"
       aria-haspopup="true"
@@ -117,7 +117,7 @@ interface DockProps {
 export default function Dock({
   items,
   className = '',
-  spring = { mass: 0.1, stiffness: 150, damping: 12 },
+  spring = { mass: 0.1, stiffness: 150, damping: 15 },
   magnification = 70,
   distance = 200,
   panelHeight = 68,
@@ -126,6 +126,13 @@ export default function Dock({
 }: DockProps) {
   const mouseX = useMotionValue(Infinity);
   const isHovered = useMotionValue(0);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    // Prevent initial flicker by waiting for first render
+    const timer = setTimeout(() => setIsReady(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const maxHeight = useMemo(
     () => Math.max(dockHeight, magnification + magnification / 2 + 4),
@@ -135,9 +142,13 @@ export default function Dock({
   const height = useSpring(heightRow, spring);
 
   return (
-    <motion.div style={{ height, scrollbarWidth: 'none' }} className="mx-2 flex max-w-full items-center justify-center">
+    <motion.div 
+      style={{ height: isReady ? height : panelHeight, scrollbarWidth: 'none' }} 
+      className="mx-2 flex max-w-full items-center justify-center"
+    >
       <motion.div
         onMouseMove={({ pageX }) => {
+          if (!isReady) return;
           isHovered.set(1);
           mouseX.set(pageX);
         }}
@@ -145,7 +156,7 @@ export default function Dock({
           isHovered.set(0);
           mouseX.set(Infinity);
         }}
-        className={`${className} flex items-end w-fit gap-4 rounded-2xl border-border border-2 bg-card/95 backdrop-blur-lg pb-2 px-4 shadow-2xl`}
+        className={`${className} flex items-end w-fit gap-4 rounded-2xl border-border border bg-card/70 backdrop-blur-xl pb-2 px-4 shadow-2xl`}
         style={{ height: panelHeight }}
         role="toolbar"
         aria-label="Application dock"
