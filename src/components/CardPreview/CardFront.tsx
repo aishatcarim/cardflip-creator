@@ -13,6 +13,12 @@ export const CardFront = () => {
     showLogo,
     backgroundColor,
     portraitOrientation,
+    imageWidth,
+    imageHeight,
+    imageScale,
+    imagePositionX,
+    imagePositionY,
+    bandHeight,
   } = cardData;
 
   return (
@@ -56,22 +62,40 @@ export const CardFront = () => {
       </div>
 
       {/* Profile Image */}
-      <div className={`absolute ${portraitOrientation === 'left' ? 'right-0' : 'left-0'} top-0 w-1/2 h-[75%] overflow-hidden`}>
-        {profileImage ? (
-          <img
-            src={profileImage}
-            alt={fullName}
-            className={`w-full h-full object-cover ${grayscale ? 'grayscale' : ''}`}
-          />
-        ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            <p className="text-muted-foreground text-sm">No Image</p>
-          </div>
-        )}
+      <div 
+        className={`absolute ${portraitOrientation === 'left' ? 'right-0' : 'left-0'} top-0 overflow-hidden`}
+        style={{
+          width: `${imageWidth}%`,
+          height: `${imageHeight}%`
+        }}
+      >
+        <div className="w-full h-full overflow-hidden">
+          {profileImage ? (
+            <img
+              src={profileImage}
+              alt={fullName}
+              className={`w-full h-full object-cover ${grayscale ? 'grayscale' : ''}`}
+              style={{
+                transform: `scale(${imageScale}) translate(${imagePositionX}%, ${imagePositionY}%)`,
+                transformOrigin: 'center center'
+              }}
+            />
+          ) : (
+            <div className="w-full h-full bg-muted flex items-center justify-center">
+              <p className="text-muted-foreground text-sm">No Image</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Company Name Footer */}
-      <div className="absolute bottom-0 left-0 right-0 bg-primary text-primary-foreground py-4 px-6">
+      <div 
+        className="absolute bottom-0 left-0 right-0 bg-primary text-primary-foreground px-6"
+        style={{
+          paddingTop: `${1 * bandHeight}rem`,
+          paddingBottom: `${1 * bandHeight}rem`
+        }}
+      >
         <p className="text-center text-sm font-light tracking-[0.3em]">
           {companyName}
         </p>

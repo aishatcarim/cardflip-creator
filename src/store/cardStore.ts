@@ -31,6 +31,16 @@ export interface CardData {
   frontLayoutStyle: 'left' | 'right' | 'centered';
   backLayoutStyle: 'simple' | 'extended' | 'minimal';
   
+  // Image controls
+  imageWidth: number;
+  imageHeight: number;
+  imageScale: number;
+  imagePositionX: number;
+  imagePositionY: number;
+  
+  // Band controls
+  bandHeight: number;
+  
   // UI State
   isFlipped: boolean;
 }
@@ -76,6 +86,14 @@ const defaultCardData: CardData = {
   shadowDepth: 0.5,
   frontLayoutStyle: 'left',
   backLayoutStyle: 'simple',
+  
+  imageWidth: 50,
+  imageHeight: 75,
+  imageScale: 1,
+  imagePositionX: 0,
+  imagePositionY: 0,
+  
+  bandHeight: 1,
   
   isFlipped: false,
 };
