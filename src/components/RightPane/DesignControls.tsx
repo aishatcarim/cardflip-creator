@@ -1,12 +1,34 @@
 import { useCardStore } from "@/store/cardStore";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, Download } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { RotateCcw, Download, Upload } from "lucide-react";
 import { toPng } from 'html-to-image';
 import { toast } from "sonner";
+import { useCallback, useState } from "react";
 
 export const DesignControls = () => {
   const { cardData, updateCardData, resetCard } = useCardStore();
+  const [profilePreview, setProfilePreview] = useState<string | null>(cardData.profileImage);
+  const [logoPreview, setLogoPreview] = useState<string | null>(cardData.companyLogo);
+
+  const handleFileUpload = useCallback((
+    file: File,
+    type: 'profile' | 'logo'
+  ) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      if (type === 'profile') {
+        setProfilePreview(result);
+        updateCardData({ profileImage: result });
+      } else {
+        setLogoPreview(result);
+        updateCardData({ companyLogo: result });
+      }
+    };
+    reader.readAsDataURL(file);
+  }, [updateCardData]);
 
   const handleExportPNG = async () => {
     const cardElement = document.querySelector('.card-preview-container');
@@ -37,12 +59,103 @@ export const DesignControls = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold mb-4 text-foreground">Design Controls</h2>
+        <h2 className="text-lg font-semibold mb-1 text-foreground">Images & Colors</h2>
+        <p className="text-xs text-muted-foreground">Visual Design</p>
+      </div>
+
+      {/* Profile Image Upload */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-muted-foreground">PROFILE IMAGE</h3>
+        
+        <div className="space-y-3">
+          {profilePreview && (
+            <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border">
+              <img
+                src={profilePreview}
+                alt="Profile preview"
+                className={`w-full h-full object-cover ${cardData.grayscale ? 'grayscale' : ''}`}
+              />
+            </div>
+          )}
+          
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => document.getElementById('profile-upload')?.click()}
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            {profilePreview ? 'Change Image' : 'Upload Image'}
+          </Button>
+          <input
+            id="profile-upload"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFileUpload(file, 'profile');
+            }}
+          />
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="grayscale">Grayscale</Label>
+            <Switch
+              id="grayscale"
+              checked={cardData.grayscale}
+              onCheckedChange={(checked) => updateCardData({ grayscale: checked })}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Company Logo Upload */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-muted-foreground">COMPANY LOGO</h3>
+        
+        <div className="space-y-3">
+          {logoPreview && (
+            <div className="relative w-full h-20 rounded-lg overflow-hidden border border-border bg-muted flex items-center justify-center p-2">
+              <img
+                src={logoPreview}
+                alt="Logo preview"
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+          )}
+          
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => document.getElementById('logo-upload')?.click()}
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            {logoPreview ? 'Change Logo' : 'Upload Logo'}
+          </Button>
+          <input
+            id="logo-upload"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFileUpload(file, 'logo');
+            }}
+          />
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="showLogo">Show on Card</Label>
+            <Switch
+              id="showLogo"
+              checked={cardData.showLogo}
+              onCheckedChange={(checked) => updateCardData({ showLogo: checked })}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Colors */}
       <div className="space-y-4">
-        <h3 className="text-sm font-medium text-muted-foreground">Colors</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">COLORS</h3>
         
         <div className="space-y-2">
           <Label htmlFor="accentColor">Accent Color</Label>
@@ -64,7 +177,7 @@ export const DesignControls = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="backgroundColor">Background Color</Label>
+          <Label htmlFor="backgroundColor">Background</Label>
           <div className="flex gap-2">
             <input
               id="backgroundColor"
@@ -102,13 +215,6 @@ export const DesignControls = () => {
           <RotateCcw className="w-4 h-4 mr-2" />
           Reset Design
         </Button>
-      </div>
-
-      {/* Info */}
-      <div className="pt-6 border-t border-border">
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          Tip: Click the Flip button to switch between front and back views. All changes update in real-time.
-        </p>
       </div>
     </div>
   );

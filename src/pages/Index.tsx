@@ -4,91 +4,113 @@ import { FrontFields } from "@/components/LeftPane/FrontFields";
 import { BackFields } from "@/components/LeftPane/BackFields";
 import { DesignControls } from "@/components/RightPane/DesignControls";
 import { Button } from "@/components/ui/button";
-import { RotateCw } from "lucide-react";
+import { RotateCw, Moon, Sun } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "next-themes";
 
 const Index = () => {
   const { cardData, toggleFlip } = useCardStore();
   const { isFlipped } = cardData;
+  const { theme, setTheme } = useTheme();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-6 py-4">
-          <h1 className="text-2xl font-light text-foreground">
-            Networking <span className="font-semibold">Co-pilot</span>
-          </h1>
-          <p className="text-sm text-muted-foreground">Profile Card Builder</p>
+      <header className="flex-shrink-0 border-b border-border bg-card">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">NC</span>
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">
+                Networking Co-pilot
+              </h1>
+              <p className="text-xs text-muted-foreground">Profile Card Builder</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="rounded-lg"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
+            
+            <Button
+              size="default"
+              onClick={toggleFlip}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+            >
+              <RotateCw className="w-4 h-4 mr-2" />
+              Flip Card
+            </Button>
+          </div>
         </div>
       </header>
 
       {/* Main Layout */}
-      <main className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Pane - Content Editor */}
-          <div className="lg:col-span-3">
-            <div className="bg-card rounded-lg border border-border p-6 sticky top-8 max-h-[calc(100vh-8rem)] overflow-y-auto">
-              <AnimatePresence mode="wait">
-                {!isFlipped ? (
-                  <motion.div
-                    key="front"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <FrontFields />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="back"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <BackFields />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Pane - Text Editor */}
+        <div className="w-80 flex-shrink-0 border-r border-border bg-card overflow-y-auto">
+          <div className="p-6">
+            <AnimatePresence mode="wait">
+              {!isFlipped ? (
+                <motion.div
+                  key="front"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <FrontFields />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="back"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <BackFields />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+        </div>
 
-          {/* Center - Preview */}
-          <div className="lg:col-span-6">
-            <div className="flex flex-col items-center justify-center min-h-[600px] space-y-8">
-              <div className="card-preview-container">
-                <FlipAnimation />
-              </div>
-              
-              <Button
-                size="lg"
-                onClick={toggleFlip}
-                className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-soft"
-              >
-                <RotateCw className="w-5 h-5 mr-2" />
-                Flip Card
-              </Button>
-
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">
-                  Currently viewing: <span className="font-medium text-foreground">
-                    {isFlipped ? 'Back Side' : 'Front Side'}
-                  </span>
-                </p>
-              </div>
+        {/* Center - Preview */}
+        <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
+          <div className="flex flex-col items-center space-y-6">
+            <div className="card-preview-container">
+              <FlipAnimation />
             </div>
-          </div>
-
-          {/* Right Pane - Design Controls */}
-          <div className="lg:col-span-3">
-            <div className="bg-card rounded-lg border border-border p-6 sticky top-8 max-h-[calc(100vh-8rem)] overflow-y-auto">
-              <DesignControls />
+            
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">
+                Currently viewing: <span className="font-medium text-foreground">
+                  {isFlipped ? 'Back Side' : 'Front Side'}
+                </span>
+              </p>
             </div>
           </div>
         </div>
-      </main>
+
+        {/* Right Pane - Images & Colors */}
+        <div className="w-80 flex-shrink-0 border-l border-border bg-card overflow-y-auto">
+          <div className="p-6">
+            <DesignControls />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
