@@ -24,6 +24,8 @@ export interface CardData {
   // Design
   accentColor: string;
   backgroundColor: string;
+  brandColor: string;
+  textColor: string;
   backgroundImage: string | null;
   fontFamily: string;
   fontSize: number;
@@ -80,6 +82,8 @@ const defaultCardData: CardData = {
   
   accentColor: '#0ea5e9',
   backgroundColor: '#ffffff',
+  brandColor: '#0ea5e9',
+  textColor: '#000000',
   backgroundImage: null,
   fontFamily: 'Inter',
   fontSize: 1,

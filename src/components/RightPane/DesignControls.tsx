@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RotateCcw, Download, Upload } from "lucide-react";
 import { toPng } from 'html-to-image';
 import { toast } from "sonner";
@@ -158,117 +159,122 @@ export const DesignControls = () => {
       <div className="space-y-4">
         <h3 className="text-sm font-medium text-muted-foreground">LAYOUT ADJUSTMENTS</h3>
         
-        {/* Image Section Size */}
-        <div className="space-y-3">
-          <Label>Image Area Size</Label>
+        <Tabs defaultValue="area" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="area">Area</TabsTrigger>
+            <TabsTrigger value="image">Image</TabsTrigger>
+            <TabsTrigger value="band">Band</TabsTrigger>
+          </TabsList>
           
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Width</span>
-              <span className="font-mono">{cardData.imageWidth}%</span>
+          <TabsContent value="area" className="space-y-3">
+            <Label>Image Area Size</Label>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Width</span>
+                <span className="font-mono">{cardData.imageWidth}%</span>
+              </div>
+              <Slider
+                value={[cardData.imageWidth]}
+                onValueChange={([value]) => updateCardData({ imageWidth: value })}
+                min={30}
+                max={70}
+                step={5}
+              />
             </div>
-            <Slider
-              value={[cardData.imageWidth]}
-              onValueChange={([value]) => updateCardData({ imageWidth: value })}
-              min={30}
-              max={70}
-              step={5}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Height</span>
-              <span className="font-mono">{cardData.imageHeight}%</span>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Height</span>
+                <span className="font-mono">{cardData.imageHeight}%</span>
+              </div>
+              <Slider
+                value={[cardData.imageHeight]}
+                onValueChange={([value]) => updateCardData({ imageHeight: value })}
+                min={60}
+                max={90}
+                step={5}
+              />
             </div>
-            <Slider
-              value={[cardData.imageHeight]}
-              onValueChange={([value]) => updateCardData({ imageHeight: value })}
-              min={60}
-              max={90}
-              step={5}
-            />
-          </div>
-        </div>
-        
-        {/* Image Scale & Position */}
-        <div className="space-y-3">
-          <Label>Image Adjustment</Label>
+          </TabsContent>
           
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Zoom</span>
-              <span className="font-mono">{cardData.imageScale.toFixed(2)}x</span>
+          <TabsContent value="image" className="space-y-3">
+            <Label>Image Adjustment</Label>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Zoom</span>
+                <span className="font-mono">{cardData.imageScale.toFixed(2)}x</span>
+              </div>
+              <Slider
+                value={[cardData.imageScale]}
+                onValueChange={([value]) => updateCardData({ imageScale: value })}
+                min={0.5}
+                max={2}
+                step={0.1}
+              />
             </div>
-            <Slider
-              value={[cardData.imageScale]}
-              onValueChange={([value]) => updateCardData({ imageScale: value })}
-              min={0.5}
-              max={2}
-              step={0.1}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Position X</span>
-              <span className="font-mono">{cardData.imagePositionX > 0 ? '+' : ''}{cardData.imagePositionX}</span>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Position X</span>
+                <span className="font-mono">{cardData.imagePositionX > 0 ? '+' : ''}{cardData.imagePositionX}</span>
+              </div>
+              <Slider
+                value={[cardData.imagePositionX]}
+                onValueChange={([value]) => updateCardData({ imagePositionX: value })}
+                min={-50}
+                max={50}
+                step={5}
+              />
             </div>
-            <Slider
-              value={[cardData.imagePositionX]}
-              onValueChange={([value]) => updateCardData({ imagePositionX: value })}
-              min={-50}
-              max={50}
-              step={5}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Position Y</span>
-              <span className="font-mono">{cardData.imagePositionY > 0 ? '+' : ''}{cardData.imagePositionY}</span>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Position Y</span>
+                <span className="font-mono">{cardData.imagePositionY > 0 ? '+' : ''}{cardData.imagePositionY}</span>
+              </div>
+              <Slider
+                value={[cardData.imagePositionY]}
+                onValueChange={([value]) => updateCardData({ imagePositionY: value })}
+                min={-50}
+                max={50}
+                step={5}
+              />
             </div>
-            <Slider
-              value={[cardData.imagePositionY]}
-              onValueChange={([value]) => updateCardData({ imagePositionY: value })}
-              min={-50}
-              max={50}
-              step={5}
-            />
-          </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs"
+              onClick={() => updateCardData({
+                imageScale: 1,
+                imagePositionX: 0,
+                imagePositionY: 0
+              })}
+            >
+              Reset Image Adjustment
+            </Button>
+          </TabsContent>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full text-xs"
-            onClick={() => updateCardData({
-              imageScale: 1,
-              imagePositionX: 0,
-              imagePositionY: 0
-            })}
-          >
-            Reset Image Adjustment
-          </Button>
-        </div>
-        
-        {/* Band Height */}
-        <div className="space-y-3">
-          <Label>Company Band Size</Label>
-          
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Height</span>
-              <span className="font-mono">{cardData.bandHeight.toFixed(1)}x</span>
+          <TabsContent value="band" className="space-y-3">
+            <Label>Company Band Size</Label>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Height</span>
+                <span className="font-mono">{cardData.bandHeight.toFixed(1)}x</span>
+              </div>
+              <Slider
+                value={[cardData.bandHeight]}
+                onValueChange={([value]) => updateCardData({ bandHeight: value })}
+                min={0.5}
+                max={3}
+                step={0.25}
+              />
             </div>
-            <Slider
-              value={[cardData.bandHeight]}
-              onValueChange={([value]) => updateCardData({ bandHeight: value })}
-              min={0.5}
-              max={3}
-              step={0.25}
-            />
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Colors */}
@@ -308,6 +314,44 @@ export const DesignControls = () => {
               type="text"
               value={cardData.backgroundColor}
               onChange={(e) => updateCardData({ backgroundColor: e.target.value })}
+              className="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="brandColor">Brand Color</Label>
+          <div className="flex gap-2">
+            <input
+              id="brandColor"
+              type="color"
+              value={cardData.brandColor}
+              onChange={(e) => updateCardData({ brandColor: e.target.value })}
+              className="w-12 h-10 rounded border border-border cursor-pointer"
+            />
+            <input
+              type="text"
+              value={cardData.brandColor}
+              onChange={(e) => updateCardData({ brandColor: e.target.value })}
+              className="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="textColor">Text Color</Label>
+          <div className="flex gap-2">
+            <input
+              id="textColor"
+              type="color"
+              value={cardData.textColor}
+              onChange={(e) => updateCardData({ textColor: e.target.value })}
+              className="w-12 h-10 rounded border border-border cursor-pointer"
+            />
+            <input
+              type="text"
+              value={cardData.textColor}
+              onChange={(e) => updateCardData({ textColor: e.target.value })}
               className="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm"
             />
           </div>

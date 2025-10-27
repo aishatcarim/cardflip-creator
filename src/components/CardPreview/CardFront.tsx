@@ -12,6 +12,8 @@ export const CardFront = () => {
     companyLogo,
     showLogo,
     backgroundColor,
+    brandColor,
+    textColor,
     portraitOrientation,
     imageWidth,
     imageHeight,
@@ -39,11 +41,11 @@ export const CardFront = () => {
 
       {/* Name and Role */}
       <div className={`absolute top-6 ${portraitOrientation === 'left' ? 'left-6' : 'right-6'} z-10 max-w-[45%]`}>
-        <h1 className="text-2xl font-light leading-tight text-foreground mb-1">
+        <h1 className="text-2xl font-light leading-tight mb-1" style={{ color: textColor }}>
           {fullName.split(' ')[0]}<br />
           {fullName.split(' ').slice(1).join(' ')}
         </h1>
-        <p className="text-xs text-muted-foreground border-t border-border pt-1">
+        <p className="text-xs pt-1" style={{ color: textColor, borderTop: `1px solid ${brandColor}` }}>
           {role}
         </p>
       </div>
@@ -51,10 +53,11 @@ export const CardFront = () => {
       {/* Website (vertical text) */}
       <div className={`absolute ${portraitOrientation === 'left' ? 'left-6' : 'right-6'} top-1/2 -translate-y-1/2 z-10`}>
         <p 
-          className="text-xs text-muted-foreground tracking-wider"
+          className="text-xs tracking-wider"
           style={{ 
             writingMode: 'vertical-rl',
-            textOrientation: 'mixed'
+            textOrientation: 'mixed',
+            color: textColor
           }}
         >
           {companyWebsite}
@@ -90,13 +93,14 @@ export const CardFront = () => {
 
       {/* Company Name Footer */}
       <div 
-        className="absolute bottom-0 left-0 right-0 bg-primary text-primary-foreground px-6"
+        className="absolute bottom-0 left-0 right-0 px-6"
         style={{
           paddingTop: `${1 * bandHeight}rem`,
-          paddingBottom: `${1 * bandHeight}rem`
+          paddingBottom: `${1 * bandHeight}rem`,
+          backgroundColor: brandColor
         }}
       >
-        <p className="text-center text-sm font-light tracking-[0.3em]">
+        <p className="text-center text-sm font-light tracking-[0.3em] text-white">
           {companyName}
         </p>
       </div>
