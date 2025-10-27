@@ -4,15 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RotateCcw, Download, Upload } from "lucide-react";
+import { RotateCcw, Download, Upload, Sparkles } from "lucide-react";
 import { toPng } from 'html-to-image';
 import { toast } from "sonner";
 import { useCallback, useState } from "react";
+import { removeBackground, loadImage, dataURLtoBlob } from "@/lib/backgroundRemoval";
 
 export const DesignControls = () => {
   const { cardData, updateCardData, resetCard } = useCardStore();
   const [profilePreview, setProfilePreview] = useState<string | null>(cardData.profileImage);
   const [logoPreview, setLogoPreview] = useState<string | null>(cardData.companyLogo);
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
 
   const handleFileUpload = useCallback((
     file: File,
@@ -31,6 +33,42 @@ export const DesignControls = () => {
     };
     reader.readAsDataURL(file);
   }, [updateCardData]);
+
+  const handleRemoveBackground = async () => {
+    if (!profilePreview) {
+      toast.error("No profile image to process");
+      return;
+    }
+
+    setIsRemovingBackground(true);
+    const toastId = toast.loading("Removing background... This may take a moment.");
+
+    try {
+      // Convert data URL to blob
+      const blob = dataURLtoBlob(profilePreview);
+      
+      // Load image
+      const image = await loadImage(blob);
+      
+      // Remove background
+      const resultBlob = await removeBackground(image);
+      
+      // Convert blob to data URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setProfilePreview(result);
+        updateCardData({ profileImage: result });
+        toast.success("Background removed successfully!", { id: toastId });
+        setIsRemovingBackground(false);
+      };
+      reader.readAsDataURL(resultBlob);
+    } catch (error) {
+      console.error('Error removing background:', error);
+      toast.error("Failed to remove background. Please try again.", { id: toastId });
+      setIsRemovingBackground(false);
+    }
+  };
 
   const handleExportPNG = async () => {
     const cardElement = document.querySelector('.card-preview-container');
@@ -80,14 +118,27 @@ export const DesignControls = () => {
             </div>
           )}
           
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => document.getElementById('profile-upload')?.click()}
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            {profilePreview ? 'Change Image' : 'Upload Image'}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => document.getElementById('profile-upload')?.click()}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              {profilePreview ? 'Change' : 'Upload'}
+            </Button>
+            {profilePreview && (
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={handleRemoveBackground}
+                disabled={isRemovingBackground}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {isRemovingBackground ? 'Processing...' : 'Remove BG'}
+              </Button>
+            )}
+          </div>
           <input
             id="profile-upload"
             type="file"
