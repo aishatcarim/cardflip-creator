@@ -10,7 +10,7 @@ export const CardActions = () => {
 
   return (
     <>
-      <div className="absolute top-4 right-4 flex gap-2 z-10">
+      <div className="flex gap-2">
         <Button
           variant="secondary"
           size="icon"
