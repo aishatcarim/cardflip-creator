@@ -27,8 +27,7 @@ export const CardBack = () => {
     <div 
       className="relative w-full h-full rounded-lg overflow-hidden shadow-elevation p-8 flex flex-col"
       style={{ 
-        backgroundColor,
-        transform: 'rotateY(180deg)'
+        backgroundColor
       }}
     >
       {/* Bio Section */}

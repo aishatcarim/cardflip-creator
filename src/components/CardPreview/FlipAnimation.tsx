@@ -33,6 +33,7 @@ export const FlipAnimation = () => {
           className="absolute inset-0 backface-hidden"
           style={{
             backfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
           }}
         >
           <CardBack />
