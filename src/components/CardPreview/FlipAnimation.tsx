@@ -10,7 +10,7 @@ export const FlipAnimation = () => {
   return (
     <div className="perspective-1000">
       <motion.div
-        className="relative w-[400px] h-[600px]"
+        className="relative w-full max-w-[400px] aspect-[2/3]"
         initial={false}
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ duration: 0.6, ease: "easeInOut" }}
