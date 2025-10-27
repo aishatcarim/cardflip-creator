@@ -229,7 +229,7 @@ export const DesignControls = () => {
                 value={[cardData.imageWidth]}
                 onValueChange={([value]) => updateCardData({ imageWidth: value })}
                 min={30}
-                max={70}
+                max={100}
                 step={5}
               />
             </div>
@@ -243,7 +243,7 @@ export const DesignControls = () => {
                 value={[cardData.imageHeight]}
                 onValueChange={([value]) => updateCardData({ imageHeight: value })}
                 min={60}
-                max={90}
+                max={100}
                 step={5}
               />
             </div>
