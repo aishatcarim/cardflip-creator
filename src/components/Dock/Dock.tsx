@@ -41,7 +41,7 @@ function DockItem({ children, className = '', onClick, mouseX, spring, distance,
       onFocus={() => isHovered.set(1)}
       onBlur={() => isHovered.set(0)}
       onClick={onClick}
-      className={`relative inline-flex items-center justify-center rounded-lg bg-card/80 backdrop-blur-md border-border border shadow-lg cursor-pointer hover:bg-accent/20 transition-colors ${className}`}
+      className={`relative inline-flex items-center justify-center rounded-lg bg-card/80 backdrop-blur-md border-border border shadow-lg cursor-pointer hover:bg-accent/20 transition-colors will-change-[width,height] ${className}`}
       tabIndex={0}
       role="button"
       aria-haspopup="true"
@@ -117,7 +117,7 @@ interface DockProps {
 export default function Dock({
   items,
   className = '',
-  spring = { mass: 0.1, stiffness: 150, damping: 15 },
+  spring = { mass: 0.1, stiffness: 150, damping: 20 },
   magnification = 70,
   distance = 200,
   panelHeight = 68,
@@ -127,11 +127,16 @@ export default function Dock({
   const mouseX = useMotionValue(Infinity);
   const isHovered = useMotionValue(0);
   const [isReady, setIsReady] = useState(false);
+  const rafIdRef = useRef<number | null>(null);
+  const lastMouseXRef = useRef<number>(Infinity);
 
   useEffect(() => {
     // Prevent initial flicker by waiting for first render
     const timer = setTimeout(() => setIsReady(true), 50);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    };
   }, []);
 
   const maxHeight = useMemo(
@@ -149,14 +154,30 @@ export default function Dock({
       <motion.div
         onMouseMove={({ pageX }) => {
           if (!isReady) return;
+          
+          // Dead zone threshold to reduce jitter
+          const deadZone = 5;
+          if (Math.abs(pageX - lastMouseXRef.current) < deadZone) return;
+          
+          lastMouseXRef.current = pageX;
           isHovered.set(1);
-          mouseX.set(pageX);
+          
+          // Throttle mouseX updates using requestAnimationFrame
+          if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+          rafIdRef.current = requestAnimationFrame(() => {
+            mouseX.set(pageX);
+          });
         }}
         onMouseLeave={() => {
           isHovered.set(0);
           mouseX.set(Infinity);
+          lastMouseXRef.current = Infinity;
+          if (rafIdRef.current) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
+          }
         }}
-        className={`${className} flex items-end w-fit gap-4 rounded-2xl border-border border bg-card/70 backdrop-blur-xl pb-2 px-4 shadow-2xl`}
+        className={`${className} flex items-end w-fit gap-4 rounded-2xl border-border border bg-card/70 backdrop-blur-xl pb-2 px-4 shadow-2xl will-change-[height]`}
         style={{ height: panelHeight }}
         role="toolbar"
         aria-label="Application dock"
