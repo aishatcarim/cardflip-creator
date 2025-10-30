@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import { useState, MouseEvent } from "react";
 import { Download, Mail, Phone, Linkedin, ArrowLeft } from "lucide-react";
-import { CardData } from "@/store/cardStore";
 import { useToast } from "@/hooks/use-toast";
 import { toPng } from "html-to-image";
+import { CardFront } from "@/components/CardPreview/CardFront";
+import { CardBack } from "@/components/CardPreview/CardBack";
 
 const ProfileViewer = () => {
   const { id } = useParams<{ id: string }>();
@@ -134,7 +135,7 @@ const ProfileViewer = () => {
           {/* Interactive 3D Card */}
           <div className="flex justify-center perspective-1000">
             <motion.div
-              className="relative w-full max-w-[400px] cursor-pointer"
+              className="relative w-[400px] h-[600px] cursor-pointer"
               style={{
                 rotateX,
                 rotateY,
@@ -147,6 +148,7 @@ const ProfileViewer = () => {
               transition={{ duration: 0.3 }}
             >
               <motion.div
+                className="w-full h-full"
                 animate={{ rotateY: isFlipped ? 180 : 0 }}
                 transition={{ duration: 0.6, ease: "easeInOut" }}
                 style={{ transformStyle: "preserve-3d" }}
@@ -154,30 +156,24 @@ const ProfileViewer = () => {
                 {/* Front Side */}
                 <div
                   id="card-front"
+                  className="absolute inset-0"
                   style={{
                     backfaceVisibility: "hidden",
-                    transform: "rotateY(0deg)",
                   }}
-                  className={isFlipped ? "hidden" : ""}
                 >
-                  <ViewCardFront cardData={card.cardData} />
+                  <CardFront cardData={card.cardData} />
                 </div>
 
                 {/* Back Side */}
                 <div
                   id="card-back"
+                  className="absolute inset-0"
                   style={{
                     backfaceVisibility: "hidden",
                     transform: "rotateY(180deg)",
                   }}
-                  className={!isFlipped ? "hidden" : ""}
                 >
-                  <ViewCardBack 
-                    cardData={card.cardData}
-                    onEmailCopy={handleEmailCopy}
-                    onPhoneDial={handlePhoneDial}
-                    onLinkedInOpen={handleLinkedInOpen}
-                  />
+                  <CardBack cardData={card.cardData} />
                 </div>
               </motion.div>
             </motion.div>
@@ -246,213 +242,6 @@ const ProfileViewer = () => {
             </motion.div>
           )}
         </div>
-      </div>
-    </div>
-  );
-};
-
-// Card Front Component
-const ViewCardFront = ({ cardData }: { cardData: CardData }) => {
-  return (
-    <div
-      className="w-full aspect-[2/3] rounded-2xl shadow-2xl overflow-hidden"
-      style={{
-        background: cardData.backgroundColor || "hsl(var(--card))",
-      }}
-    >
-      <div className="h-full flex flex-col p-8">
-        {/* Logo and Name Section */}
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex-1">
-            {cardData.showLogo && cardData.companyLogo && (
-              <img
-                src={cardData.companyLogo}
-                alt="Company Logo"
-                className="h-12 w-auto mb-4 object-contain"
-              />
-            )}
-            <h2
-              className="text-2xl font-bold mb-1"
-              style={{ color: cardData.textColor || "hsl(var(--foreground))" }}
-            >
-              {cardData.fullName || "Your Name"}
-            </h2>
-            <p
-              className="text-sm opacity-90"
-              style={{ color: cardData.textColor || "hsl(var(--foreground))" }}
-            >
-              {cardData.role || "Your Role"}
-            </p>
-            {cardData.companyWebsite && (
-              <p
-                className="text-xs mt-1 opacity-75"
-                style={{ color: cardData.textColor || "hsl(var(--foreground))" }}
-              >
-                {cardData.companyWebsite}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Profile Image */}
-        <div className="flex-1 flex items-end justify-end">
-          {cardData.profileImage && (
-            <div
-              className="w-48 h-48 rounded-xl overflow-hidden shadow-lg"
-            >
-              <img
-                src={cardData.profileImage}
-                alt="Profile"
-                className="w-full h-full object-cover"
-                style={{
-                  objectPosition: `${cardData.imagePositionX || 0}% ${cardData.imagePositionY || 0}%`,
-                  filter: cardData.grayscale ? 'grayscale(100%)' : 'none',
-                }}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Card Back Component
-const ViewCardBack = ({ 
-  cardData,
-  onEmailCopy,
-  onPhoneDial,
-  onLinkedInOpen 
-}: { 
-  cardData: CardData;
-  onEmailCopy: (email: string) => void;
-  onPhoneDial: (phone: string) => void;
-  onLinkedInOpen: (url: string) => void;
-}) => {
-  return (
-    <div
-      className="w-full aspect-[2/3] rounded-2xl shadow-2xl overflow-hidden"
-      style={{
-        background: cardData.backgroundColor || "hsl(var(--card))",
-      }}
-    >
-      <div className="h-full flex flex-col p-8">
-        {/* Bio Section */}
-        <div className="mb-6">
-          <h3
-            className="text-lg font-semibold mb-2"
-            style={{ color: cardData.textColor || "hsl(var(--foreground))" }}
-          >
-            About
-          </h3>
-          <p
-            className="text-sm opacity-90 leading-relaxed"
-            style={{ color: cardData.textColor || "hsl(var(--foreground))" }}
-          >
-            {cardData.bio || "Your bio goes here"}
-          </p>
-        </div>
-
-        {/* Interests */}
-        {cardData.interests && cardData.interests.length > 0 && (
-          <div className="mb-6">
-            <h3
-              className="text-lg font-semibold mb-2"
-              style={{ color: cardData.textColor || "hsl(var(--foreground))" }}
-            >
-              Interests
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {cardData.interests.map((interest, idx) => (
-                <span
-                  key={idx}
-                  className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{
-                    backgroundColor: `${cardData.textColor || "hsl(var(--foreground))"}20`,
-                    color: cardData.textColor || "hsl(var(--foreground))",
-                  }}
-                >
-                  {interest}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Contact Info - Interactive */}
-        <div className="space-y-3 mb-6">
-          {cardData.email && (
-            <button
-              onClick={() => onEmailCopy(cardData.email)}
-              className="w-full text-left p-2 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4" style={{ color: cardData.textColor }} />
-                <span
-                  className="text-sm"
-                  style={{ color: cardData.textColor || "hsl(var(--foreground))" }}
-                >
-                  {cardData.email}
-                </span>
-              </div>
-            </button>
-          )}
-          {cardData.phone && (
-            <button
-              onClick={() => onPhoneDial(cardData.phone)}
-              className="w-full text-left p-2 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4" style={{ color: cardData.textColor }} />
-                <span
-                  className="text-sm"
-                  style={{ color: cardData.textColor || "hsl(var(--foreground))" }}
-                >
-                  {cardData.phone}
-                </span>
-              </div>
-            </button>
-          )}
-        </div>
-
-        {/* Quick Links - Interactive */}
-        {cardData.quickLinks && cardData.quickLinks.length > 0 && (
-          <div className="space-y-2">
-            {cardData.quickLinks.map((link, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  if (link.icon === 'Linkedin') {
-                    onLinkedInOpen(link.url);
-                  } else {
-                    window.open(link.url, '_blank');
-                  }
-                }}
-                className="w-full text-left p-2 rounded-lg hover:bg-white/10 transition-colors flex items-center gap-2"
-              >
-                <Linkedin className="h-4 w-4" style={{ color: cardData.textColor }} />
-                <span
-                  className="text-sm"
-                  style={{ color: cardData.textColor || "hsl(var(--foreground))" }}
-                >
-                  {link.label}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* CTA */}
-        {cardData.ctaText && (
-          <div className="mt-auto pt-6 border-t border-white/10">
-            <p
-              className="text-center text-sm font-medium"
-              style={{ color: cardData.textColor || "hsl(var(--foreground))" }}
-            >
-              {cardData.ctaText}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

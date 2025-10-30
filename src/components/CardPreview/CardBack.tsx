@@ -1,4 +1,4 @@
-import { useCardStore } from "@/store/cardStore";
+import { useCardStore, CardData } from "@/store/cardStore";
 import { Mail, Phone, Linkedin, Twitter, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -8,8 +8,10 @@ const iconMap: Record<string, any> = {
   Globe,
 };
 
-export const CardBack = () => {
-  const { cardData } = useCardStore();
+export const CardBack = ({ cardData: propCardData }: { cardData?: CardData } = {}) => {
+  const store = useCardStore();
+  const cardData = propCardData || store.cardData;
+  
   const {
     bio,
     interests,

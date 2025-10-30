@@ -1,7 +1,9 @@
-import { useCardStore } from "@/store/cardStore";
+import { useCardStore, CardData } from "@/store/cardStore";
 
-export const CardFront = () => {
-  const { cardData } = useCardStore();
+export const CardFront = ({ cardData: propCardData }: { cardData?: CardData } = {}) => {
+  const store = useCardStore();
+  const cardData = propCardData || store.cardData;
+  
   const {
     fullName,
     role,
