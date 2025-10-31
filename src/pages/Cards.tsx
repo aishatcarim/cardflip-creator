@@ -5,7 +5,7 @@ import { FrontFields } from "@/components/LeftPane/FrontFields";
 import { BackFields } from "@/components/LeftPane/BackFields";
 import { DesignControls } from "@/components/RightPane/DesignControls";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Settings, LayoutGrid, QrCode, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, LayoutGrid, QrCode, Users, BarChart3 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import Dock from "@/components/Dock/Dock";
@@ -42,9 +42,9 @@ const Cards = () => {
       onClick: () => navigate('/contacts')
     },
     { 
-      icon: <Settings size={20} />, 
-      label: 'Settings', 
-      onClick: () => setShowDefaults(true) 
+      icon: <BarChart3 size={20} />, 
+      label: 'Analytics', 
+      onClick: () => navigate('/analytics')
     },
   ];
 

@@ -8,7 +8,7 @@ import { ContactTagModal } from "@/components/Contacts/ContactTagModal";
 import { ExportMenu } from "@/components/Contacts/ExportMenu";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, LayoutGrid, QrCode, Trash2 } from "lucide-react";
+import { Users, LayoutGrid, QrCode, Trash2, Download, UserPlus, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Dock from "@/components/Dock/Dock";
@@ -131,13 +131,15 @@ const Contacts = () => {
     toast.success("Contacts exported as CSV");
   };
 
-  const handleExportVCards = () => {
+  const handleExportAllVCards = () => {
+    filteredContacts.forEach((contact) => exportContactVCard(contact.id));
+    toast.success(`Exported ${filteredContacts.length} vCard${filteredContacts.length !== 1 ? 's' : ''}`);
+  };
+
+  const handleExportSelectedVCards = () => {
     if (selectedContacts.length > 0) {
       exportMultipleVCards(selectedContacts);
-      toast.success(`Exported ${selectedContacts.length} vCards`);
-    } else {
-      filteredContacts.forEach((contact) => exportContactVCard(contact.id));
-      toast.success(`Exported ${filteredContacts.length} vCards`);
+      toast.success(`Exported ${selectedContacts.length} vCard${selectedContacts.length !== 1 ? 's' : ''}`);
     }
   };
 
@@ -168,6 +170,11 @@ const Contacts = () => {
       onClick: () => navigate("/contacts"),
       className: "bg-accent/30",
     },
+    {
+      icon: <BarChart3 size={20} />,
+      label: "Analytics",
+      onClick: () => navigate("/analytics"),
+    },
   ];
 
   return (
@@ -184,11 +191,22 @@ const Contacts = () => {
                 {filteredContacts.length} contact{filteredContacts.length !== 1 ? "s" : ""}
               </p>
             </div>
-            <ExportMenu
-              onExportCSV={handleExportCSV}
-              onExportVCards={handleExportVCards}
-              selectedCount={selectedContacts.length}
-            />
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => {
+                  setEditingContact(null);
+                  setShowTagModal(true);
+                }}
+                className="gap-2"
+              >
+                <UserPlus className="h-4 w-4" />
+                Add Contact
+              </Button>
+              <ExportMenu
+                onExportCSV={handleExportCSV}
+                onExportVCards={handleExportAllVCards}
+              />
+            </div>
           </div>
 
           {/* Search */}
@@ -208,15 +226,26 @@ const Contacts = () => {
               <span className="text-sm text-foreground">
                 {selectedContacts.length} selected
               </span>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setShowDeleteDialog(true)}
-                className="ml-auto gap-2"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete Selected
-              </Button>
+              <div className="ml-auto flex items-center gap-2">
+                <Button
+                  onClick={handleExportSelectedVCards}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Export vCard
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </Button>
+              </div>
             </motion.div>
           )}
         </div>

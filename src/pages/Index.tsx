@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
-import { Eye, LayoutGrid, QrCode, Users } from "lucide-react";
+import { Eye, LayoutGrid, QrCode, Users, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSavedCardsStore } from "@/store/savedCardsStore";
 import { ViewCardModal } from "@/components/Profile/ViewCardModal";
@@ -49,6 +49,11 @@ const Index = () => {
       icon: <Users size={20} />, 
       label: 'Contacts', 
       onClick: () => navigate('/contacts')
+    },
+    { 
+      icon: <BarChart3 size={20} />, 
+      label: 'Analytics', 
+      onClick: () => navigate('/analytics')
     },
   ];
 
