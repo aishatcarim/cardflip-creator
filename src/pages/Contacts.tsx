@@ -8,7 +8,7 @@ import { ContactTagModal } from "@/components/Contacts/ContactTagModal";
 import { ExportMenu } from "@/components/Contacts/ExportMenu";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, LayoutGrid, QrCode, Trash2, Download, UserPlus, BarChart3 } from "lucide-react";
+import { Users, LayoutGrid, QrCode, Trash2, Download, UserPlus, BarChart3, Calendar, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Dock from "@/components/Dock/Dock";
@@ -43,6 +43,7 @@ const Contacts = () => {
   const [editingContact, setEditingContact] = useState<any>(null);
   const [showTagModal, setShowTagModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [dockVisible, setDockVisible] = useState(true);
 
   // Extract unique events and industries
   const events = useMemo(
@@ -169,6 +170,11 @@ const Contacts = () => {
       label: "Contacts",
       onClick: () => navigate("/contacts"),
       className: "bg-accent/30",
+    },
+    {
+      icon: <Calendar size={20} />,
+      label: "Events",
+      onClick: () => navigate("/events"),
     },
     {
       icon: <BarChart3 size={20} />,
@@ -327,20 +333,43 @@ const Contacts = () => {
       </div>
 
       {/* Dock Navigation */}
+      {dockVisible && (
+        <motion.div
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
+        >
+          <div className="pointer-events-auto">
+            <Dock
+              items={dockItems}
+              panelHeight={68}
+              baseItemSize={50}
+              magnification={70}
+            />
+          </div>
+        </motion.div>
+      )}
+
+      {/* Dock Visibility Toggle */}
       <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-        className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3 }}
+        className="fixed bottom-4 right-4 z-50"
       >
-        <div className="pointer-events-auto">
-          <Dock
-            items={dockItems}
-            panelHeight={68}
-            baseItemSize={50}
-            magnification={70}
-          />
-        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setDockVisible(!dockVisible)}
+          className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background"
+        >
+          {dockVisible ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
+          )}
+        </Button>
       </motion.div>
 
       {/* Tag/Edit Modal */}

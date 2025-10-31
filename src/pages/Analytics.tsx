@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { AppHeader } from '@/components/Navigation/AppHeader';
 import Dock from '@/components/Dock/Dock';
 import { useNavigate } from 'react-router-dom';
-import { Home, CreditCard, Users, BarChart3, Download, Calendar } from 'lucide-react';
+import { Home, CreditCard, Users, BarChart3, Download, Calendar, Eye, EyeOff } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { useEventData } from '@/hooks/useEventData';
 import { StatsCard } from '@/components/Analytics/StatsCard';
@@ -25,6 +26,7 @@ const Analytics = () => {
   const [viewMode, setViewMode] = useState<'overview' | 'events'>('overview');
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [dockVisible, setDockVisible] = useState(true);
   
   const {
     totalContacts,
@@ -67,9 +69,15 @@ const Analytics = () => {
       onClick: () => navigate('/contacts')
     },
     {
+      icon: <Calendar className="h-6 w-6" />,
+      label: 'Events',
+      onClick: () => navigate('/events')
+    },
+    {
       icon: <BarChart3 className="h-6 w-6" />,
       label: 'Analytics',
-      onClick: () => navigate('/analytics')
+      onClick: () => navigate('/analytics'),
+      className: 'bg-accent/30'
     }
   ];
 
@@ -109,11 +117,34 @@ const Analytics = () => {
           </div>
         </main>
 
-        <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none z-50">
-          <div className="pointer-events-auto">
-            <Dock items={dockItems} />
+        {dockVisible && (
+          <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none z-50">
+            <div className="pointer-events-auto">
+              <Dock items={dockItems} />
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Dock Visibility Toggle */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }}
+          className="fixed bottom-4 right-4 z-50"
+        >
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setDockVisible(!dockVisible)}
+            className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background"
+          >
+            {dockVisible ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </Button>
+        </motion.div>
       </div>
     );
   }
@@ -238,11 +269,34 @@ const Analytics = () => {
         onClose={() => setTimelineOpen(false)}
       />
 
-      <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none z-50">
-        <div className="pointer-events-auto">
-          <Dock items={dockItems} />
+      {dockVisible && (
+        <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none z-50">
+          <div className="pointer-events-auto">
+            <Dock items={dockItems} />
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Dock Visibility Toggle */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3 }}
+        className="fixed bottom-4 right-4 z-50"
+      >
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setDockVisible(!dockVisible)}
+          className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background"
+        >
+          {dockVisible ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
+          )}
+        </Button>
+      </motion.div>
     </div>
   );
 };

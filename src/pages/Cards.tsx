@@ -5,7 +5,7 @@ import { FrontFields } from "@/components/LeftPane/FrontFields";
 import { BackFields } from "@/components/LeftPane/BackFields";
 import { DesignControls } from "@/components/RightPane/DesignControls";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Settings, LayoutGrid, QrCode, Users, BarChart3 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, LayoutGrid, QrCode, Users, BarChart3, Calendar, Eye, EyeOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import Dock from "@/components/Dock/Dock";
@@ -22,6 +22,7 @@ const Cards = () => {
   const [showHidden, setShowHidden] = useState(false);
   const [showDefaults, setShowDefaults] = useState(false);
   const [currentTab, setCurrentTab] = useState("builder");
+  const [dockVisible, setDockVisible] = useState(true);
   const navigate = useNavigate();
 
   const dockItems = [
@@ -40,6 +41,11 @@ const Cards = () => {
       icon: <Users size={20} />, 
       label: 'Contacts', 
       onClick: () => navigate('/contacts')
+    },
+    { 
+      icon: <Calendar size={20} />, 
+      label: 'Events', 
+      onClick: () => navigate('/events')
     },
     { 
       icon: <BarChart3 size={20} />, 
@@ -220,21 +226,44 @@ const Cards = () => {
       {/* Defaults Sheet */}
       <DefaultsSheet open={showDefaults} onOpenChange={setShowDefaults} />
 
-      {/* Dock Navigation - Always visible */}
+      {/* Dock Navigation */}
+      {dockVisible && (
+        <motion.div
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
+        >
+          <div className="pointer-events-auto">
+            <Dock 
+              items={dockItems}
+              panelHeight={68}
+              baseItemSize={50}
+              magnification={70}
+            />
+          </div>
+        </motion.div>
+      )}
+
+      {/* Dock Visibility Toggle */}
       <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-        className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3 }}
+        className="fixed bottom-4 right-4 z-50"
       >
-        <div className="pointer-events-auto">
-          <Dock 
-            items={dockItems}
-            panelHeight={68}
-            baseItemSize={50}
-            magnification={70}
-          />
-        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setDockVisible(!dockVisible)}
+          className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background"
+        >
+          {dockVisible ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
+          )}
+        </Button>
       </motion.div>
     </div>
   );

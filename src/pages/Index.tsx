@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
-import { Eye, LayoutGrid, QrCode, Users, BarChart3 } from "lucide-react";
+import { Eye, LayoutGrid, QrCode, Users, BarChart3, Calendar, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSavedCardsStore } from "@/store/savedCardsStore";
 import { ViewCardModal } from "@/components/Profile/ViewCardModal";
@@ -17,6 +17,7 @@ const Index = () => {
   const [selectedCardId, setSelectedCardId] = useState<string>("");
   const [coloredQR, setColoredQR] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [dockVisible, setDockVisible] = useState(true);
 
   // Get visible cards (not hidden)
   const visibleCards = savedCards.filter(card => !card.hidden);
@@ -49,6 +50,11 @@ const Index = () => {
       icon: <Users size={20} />, 
       label: 'Contacts', 
       onClick: () => navigate('/contacts')
+    },
+    { 
+      icon: <Calendar size={20} />, 
+      label: 'Events', 
+      onClick: () => navigate('/events')
     },
     { 
       icon: <BarChart3 size={20} />, 
@@ -237,21 +243,44 @@ const Index = () => {
         />
       )}
 
-      {/* Dock Navigation - Always visible */}
+      {/* Dock Navigation */}
+      {dockVisible && (
+        <motion.div
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
+        >
+          <div className="pointer-events-auto">
+            <Dock 
+              items={dockItems}
+              panelHeight={68}
+              baseItemSize={50}
+              magnification={70}
+            />
+          </div>
+        </motion.div>
+      )}
+
+      {/* Dock Visibility Toggle */}
       <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-        className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3 }}
+        className="fixed bottom-4 right-4 z-50"
       >
-        <div className="pointer-events-auto">
-          <Dock 
-            items={dockItems}
-            panelHeight={68}
-            baseItemSize={50}
-            magnification={70}
-          />
-        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setDockVisible(!dockVisible)}
+          className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background"
+        >
+          {dockVisible ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
+          )}
+        </Button>
       </motion.div>
     </div>
   );
