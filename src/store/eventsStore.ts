@@ -19,10 +19,32 @@ interface EventsState {
   getEventById: (id: string) => Event | undefined;
 }
 
+// Mock events for demonstration
+const mockEvents: Event[] = [
+  {
+    id: 'event-mock-1',
+    name: 'Tech Summit 2024',
+    description: 'Annual technology conference featuring the latest innovations in AI, cloud computing, and software development.',
+    date: '2024-03-15',
+    location: 'San Francisco Convention Center',
+    imageUrl: '/src/assets/event-banners/conference-default.jpg',
+    createdAt: '2024-03-01T10:00:00.000Z',
+  },
+  {
+    id: 'event-mock-2',
+    name: 'Startup Networking Mixer',
+    description: 'Connect with founders, investors, and innovators in the startup ecosystem.',
+    date: '2024-04-20',
+    location: 'Silicon Valley Hub',
+    imageUrl: '/src/assets/event-banners/meetup-default.jpg',
+    createdAt: '2024-04-01T10:00:00.000Z',
+  },
+];
+
 export const useEventsStore = create<EventsState>()(
   persist(
     (set, get) => ({
-      events: [],
+      events: mockEvents,
       
       addEvent: (event) => {
         const newEvent: Event = {
