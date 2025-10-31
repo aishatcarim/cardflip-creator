@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Cards from "./pages/Cards";
 import Contacts from "./pages/Contacts";
 import Events from "./pages/Events";
+import EventDetail from "./pages/EventDetail";
 import Analytics from "./pages/Analytics";
 import ProfileViewer from "./pages/ProfileViewer";
 import NotFound from "./pages/NotFound";
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/cards" element={<Cards />} />
             <Route path="/contacts" element={<Contacts />} />
             <Route path="/events" element={<Events />} />
+            <Route path="/events/:eventId" element={<EventDetail />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/profile/:id" element={<ProfileViewer />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

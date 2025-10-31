@@ -2,22 +2,26 @@ import { useState } from 'react';
 import { AppHeader } from '@/components/Navigation/AppHeader';
 import Dock from '@/components/Dock/Dock';
 import { useNavigate } from 'react-router-dom';
-import { Home, CreditCard, Users, BarChart3, Calendar, Download, Eye, EyeOff } from 'lucide-react';
+import { Home, CreditCard, Users, BarChart3, Calendar, Download, Eye, EyeOff, Plus } from 'lucide-react';
 import { useEventData } from '@/hooks/useEventData';
 import { EventCard } from '@/components/Events/EventCard';
 import { EventTimeline } from '@/components/Events/EventTimeline';
 import { Button } from '@/components/ui/button';
 import { useNetworkContactsStore } from '@/store/networkContactsStore';
+import { useEventsStore } from '@/store/eventsStore';
 import { toast } from 'sonner';
 import { EventData } from '@/hooks/useEventData';
 import { motion } from 'framer-motion';
+import { AddEventDialog } from '@/components/Events/AddEventDialog';
 
 const Events = () => {
   const navigate = useNavigate();
   const { exportContactsCSV } = useNetworkContactsStore();
+  const { events } = useEventsStore();
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [dockVisible, setDockVisible] = useState(true);
+  const [addEventOpen, setAddEventOpen] = useState(false);
   
   const eventData = useEventData();
 
@@ -29,6 +33,13 @@ const Events = () => {
   const handleViewTimeline = (event: EventData) => {
     setSelectedEvent(event);
     setTimelineOpen(true);
+  };
+
+  const handleViewEventDetail = (eventName: string) => {
+    const event = events.find(e => e.name.toLowerCase() === eventName.toLowerCase());
+    if (event) {
+      navigate(`/events/${event.id}`);
+    }
   };
 
   const dockItems = [
@@ -69,36 +80,47 @@ const Events = () => {
             <h1 className="text-3xl font-bold mb-2">Event Dashboard</h1>
             <p className="text-muted-foreground">Manage your networking events and follow-ups</p>
           </div>
-          <Button onClick={handleExportReport} variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            Export
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setAddEventOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Event
+            </Button>
+            <Button onClick={handleExportReport} variant="outline" className="gap-2">
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+          </div>
         </div>
 
         {eventData.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {eventData.map((event, index) => (
-              <EventCard
-                key={event.eventName}
-                event={event}
-                index={index}
-                onViewTimeline={() => handleViewTimeline(event)}
-              />
+              <div key={event.eventName} onClick={() => handleViewEventDetail(event.eventName)}>
+                <EventCard
+                  event={event}
+                  index={index}
+                  onViewTimeline={() => handleViewTimeline(event)}
+                />
+              </div>
             ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
             <Calendar className="h-16 w-16 text-muted-foreground/50 mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">No Events Tracked Yet</h2>
+            <h2 className="text-2xl font-semibold mb-2">No Events Created Yet</h2>
             <p className="text-muted-foreground mb-6 max-w-md">
-              Events will appear here once you tag contacts with event names. Start organizing your networking!
+              Create your first event to start tracking contacts and follow-ups from your networking activities!
             </p>
-            <Button onClick={() => navigate('/contacts')} size="lg">
-              Add First Contact
+            <Button onClick={() => setAddEventOpen(true)} size="lg">
+              <Plus className="h-4 w-4 mr-2" />
+              Add First Event
             </Button>
           </div>
         )}
       </main>
+
+      {/* Add Event Dialog */}
+      <AddEventDialog open={addEventOpen} onOpenChange={setAddEventOpen} />
 
       {/* Event Timeline Sheet */}
       <EventTimeline
