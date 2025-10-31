@@ -12,9 +12,15 @@ export interface NetworkContact {
   email?: string;
   phone?: string;
   company?: string;
+  title?: string;
   taggedAt: string;
   isQuickTag: boolean;
   metadata?: Record<string, any>;
+  followUpStatus?: 'pending' | 'done' | 'snoozed' | 'none';
+  followUpDate?: string;
+  followUpDueDate?: string;
+  snoozedUntil?: string;
+  followUpNotes?: string;
 }
 
 export interface ContactsSettings {
@@ -37,6 +43,9 @@ interface NetworkContactsStore {
   exportContactsCSV: () => void;
   exportContactVCard: (contactId: string) => void;
   exportMultipleVCards: (contactIds: string[]) => void;
+  updateFollowUpStatus: (contactId: string, status: NetworkContact['followUpStatus'], date?: string) => void;
+  snoozeContact: (contactId: string, untilDate: string) => void;
+  bulkUpdateFollowUpStatus: (contactIds: string[], status: NetworkContact['followUpStatus']) => void;
 }
 
 export const useNetworkContactsStore = create<NetworkContactsStore>()(
@@ -172,6 +181,51 @@ END:VCARD`;
           get().exportContactVCard(contact.id);
         });
       },
+
+      updateFollowUpStatus: (contactId, status, date) => {
+        set((state) => ({
+          contacts: state.contacts.map((contact) =>
+            contact.id === contactId
+              ? {
+                  ...contact,
+                  followUpStatus: status,
+                  followUpDate: status === 'done' ? (date || new Date().toISOString()) : contact.followUpDate,
+                  snoozedUntil: status === 'snoozed' ? undefined : contact.snoozedUntil
+                }
+              : contact
+          )
+        }));
+      },
+
+      snoozeContact: (contactId, untilDate) => {
+        set((state) => ({
+          contacts: state.contacts.map((contact) =>
+            contact.id === contactId
+              ? {
+                  ...contact,
+                  followUpStatus: 'snoozed',
+                  snoozedUntil: untilDate
+                }
+              : contact
+          )
+        }));
+      },
+
+      bulkUpdateFollowUpStatus: (contactIds, status) => {
+        const date = status === 'done' ? new Date().toISOString() : undefined;
+        set((state) => ({
+          contacts: state.contacts.map((contact) =>
+            contactIds.includes(contact.id)
+              ? {
+                  ...contact,
+                  followUpStatus: status,
+                  followUpDate: date,
+                  snoozedUntil: status === 'snoozed' ? contact.snoozedUntil : undefined
+                }
+              : contact
+          )
+        }));
+      }
     }),
     {
       name: 'network-contacts-storage',
