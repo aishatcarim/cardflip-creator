@@ -5,7 +5,7 @@ import { FrontFields } from "@/components/LeftPane/FrontFields";
 import { BackFields } from "@/components/LeftPane/BackFields";
 import { DesignControls } from "@/components/RightPane/DesignControls";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Settings, LayoutGrid, QrCode } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, LayoutGrid, QrCode, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import Dock from "@/components/Dock/Dock";
@@ -35,6 +35,11 @@ const Cards = () => {
       label: 'Card Builder', 
       onClick: () => navigate('/cards'),
       className: 'bg-accent/30'
+    },
+    { 
+      icon: <Users size={20} />, 
+      label: 'Contacts', 
+      onClick: () => navigate('/contacts')
     },
     { 
       icon: <Settings size={20} />, 

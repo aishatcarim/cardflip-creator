@@ -3,7 +3,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useSavedCardsStore } from "@/store/savedCardsStore";
+import { useNetworkContactsStore } from "@/store/networkContactsStore";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -14,6 +16,7 @@ interface DefaultsSheetProps {
 
 export const DefaultsSheet = ({ open, onOpenChange }: DefaultsSheetProps) => {
   const { defaults, updateDefaults } = useSavedCardsStore();
+  const { settings: networkSettings, updateSettings: updateNetworkSettings } = useNetworkContactsStore();
   
   const [frontDefaults, setFrontDefaults] = useState({
     role: defaults.front.role || "",
@@ -27,6 +30,12 @@ export const DefaultsSheet = ({ open, onOpenChange }: DefaultsSheetProps) => {
     email: defaults.back.email || "",
     phone: defaults.back.phone || "",
     ctaText: defaults.back.ctaText || "",
+  });
+
+  const [networkDefaults, setNetworkDefaults] = useState({
+    autoShowTagModal: networkSettings.autoShowTagModal,
+    defaultToQuickTag: networkSettings.defaultToQuickTag,
+    defaultEvent: networkSettings.defaultEvent,
   });
 
   useEffect(() => {
@@ -43,14 +52,20 @@ export const DefaultsSheet = ({ open, onOpenChange }: DefaultsSheetProps) => {
         phone: defaults.back.phone || "",
         ctaText: defaults.back.ctaText || "",
       });
+      setNetworkDefaults({
+        autoShowTagModal: networkSettings.autoShowTagModal,
+        defaultToQuickTag: networkSettings.defaultToQuickTag,
+        defaultEvent: networkSettings.defaultEvent,
+      });
     }
-  }, [open, defaults]);
+  }, [open, defaults, networkSettings]);
 
   const handleSave = () => {
     updateDefaults({
       front: frontDefaults,
       back: backDefaults,
     });
+    updateNetworkSettings(networkDefaults);
     toast.success("Default settings saved");
     onOpenChange(false);
   };
@@ -66,9 +81,10 @@ export const DefaultsSheet = ({ open, onOpenChange }: DefaultsSheetProps) => {
         </SheetHeader>
 
         <Tabs defaultValue="front" className="mt-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="front">Front Side</TabsTrigger>
-            <TabsTrigger value="back">Back Side</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="front">Front</TabsTrigger>
+            <TabsTrigger value="back">Back</TabsTrigger>
+            <TabsTrigger value="network">Network</TabsTrigger>
           </TabsList>
 
           <TabsContent value="front" className="space-y-4 mt-4">
@@ -153,6 +169,58 @@ export const DefaultsSheet = ({ open, onOpenChange }: DefaultsSheetProps) => {
                 onChange={(e) => setBackDefaults({ ...backDefaults, ctaText: e.target.value })}
                 placeholder="e.g., Let's connect!"
               />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="network" className="space-y-4 mt-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="auto-show-tag">Auto-show tag modal</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Automatically show the contact tagging modal when someone scans your QR code
+                  </p>
+                </div>
+                <Switch
+                  id="auto-show-tag"
+                  checked={networkDefaults.autoShowTagModal}
+                  onCheckedChange={(checked) =>
+                    setNetworkDefaults({ ...networkDefaults, autoShowTagModal: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="default-quick-tag">Default to Quick Tag</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Use simplified quick tag mode by default instead of full details form
+                  </p>
+                </div>
+                <Switch
+                  id="default-quick-tag"
+                  checked={networkDefaults.defaultToQuickTag}
+                  onCheckedChange={(checked) =>
+                    setNetworkDefaults({ ...networkDefaults, defaultToQuickTag: checked })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="default-event">Default Event Name</Label>
+                <Input
+                  id="default-event"
+                  value={networkDefaults.defaultEvent}
+                  onChange={(e) =>
+                    setNetworkDefaults({ ...networkDefaults, defaultEvent: e.target.value })
+                  }
+                  placeholder="e.g., Tech Conference 2025"
+                  maxLength={100}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Pre-fill this event name when tagging new contacts
+                </p>
+              </div>
             </div>
           </TabsContent>
         </Tabs>

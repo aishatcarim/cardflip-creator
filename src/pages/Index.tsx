@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
-import { Eye, LayoutGrid, QrCode, Settings } from "lucide-react";
+import { Eye, LayoutGrid, QrCode, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSavedCardsStore } from "@/store/savedCardsStore";
 import { ViewCardModal } from "@/components/Profile/ViewCardModal";
@@ -44,6 +44,11 @@ const Index = () => {
       icon: <LayoutGrid size={20} />, 
       label: 'Card Builder', 
       onClick: () => navigate('/cards')
+    },
+    { 
+      icon: <Users size={20} />, 
+      label: 'Contacts', 
+      onClick: () => navigate('/contacts')
     },
   ];
 

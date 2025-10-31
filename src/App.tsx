@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Cards from "./pages/Cards";
+import Contacts from "./pages/Contacts";
 import ProfileViewer from "./pages/ProfileViewer";
 import NotFound from "./pages/NotFound";
 
@@ -21,6 +22,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/cards" element={<Cards />} />
+            <Route path="/contacts" element={<Contacts />} />
             <Route path="/profile/:id" element={<ProfileViewer />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

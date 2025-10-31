@@ -1,20 +1,24 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useSavedCardsStore } from "@/store/savedCardsStore";
+import { useNetworkContactsStore } from "@/store/networkContactsStore";
 import { Button } from "@/components/ui/button";
 import { motion, useMotionValue, useTransform } from "framer-motion";
-import { useState, MouseEvent } from "react";
-import { Download, Mail, Phone, Linkedin, ArrowLeft } from "lucide-react";
+import { useState, MouseEvent, useEffect } from "react";
+import { Download, Mail, Phone, Linkedin, ArrowLeft, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { toPng } from "html-to-image";
 import { CardFront } from "@/components/CardPreview/CardFront";
 import { CardBack } from "@/components/CardPreview/CardBack";
+import { ContactTagModal } from "@/components/Contacts/ContactTagModal";
 
 const ProfileViewer = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { savedCards } = useSavedCardsStore();
+  const { settings } = useNetworkContactsStore();
   const { toast } = useToast();
   const [isFlipped, setIsFlipped] = useState(false);
+  const [showTagModal, setShowTagModal] = useState(false);
 
   const card = savedCards.find((c) => c.id === id);
 
@@ -80,6 +84,14 @@ const ProfileViewer = () => {
   const handleLinkedInOpen = (linkedin: string) => {
     window.open(linkedin, '_blank');
   };
+
+  // Auto-show tag modal if setting is enabled
+  useEffect(() => {
+    if (settings.autoShowTagModal && id) {
+      const timer = setTimeout(() => setShowTagModal(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [settings.autoShowTagModal, id]);
 
   if (!card) {
     return (
@@ -199,11 +211,29 @@ const ProfileViewer = () => {
             </Button>
           </div>
 
+          {/* Tag Contact Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="flex justify-center"
+          >
+            <Button
+              size="lg"
+              onClick={() => setShowTagModal(true)}
+              className="gap-2 shadow-lg hover:shadow-xl transition-shadow"
+            >
+              <UserPlus className="h-5 w-5" />
+              Tag This Contact
+            </Button>
+          </motion.div>
+
           {/* Quick Actions */}
           {!isFlipped && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
               className="grid grid-cols-1 sm:grid-cols-3 gap-4"
             >
               {card.cardData.email && (
@@ -243,6 +273,20 @@ const ProfileViewer = () => {
           )}
         </div>
       </div>
+
+      {/* Contact Tag Modal */}
+      <ContactTagModal
+        open={showTagModal}
+        onOpenChange={setShowTagModal}
+        profileCardId={id || ""}
+        onSuccess={() => {
+          toast({
+            title: "Success",
+            description: "Contact saved to your network",
+          });
+          navigate("/contacts");
+        }}
+      />
     </div>
   );
 };
