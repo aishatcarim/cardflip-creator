@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useNetworkContactsStore } from '@/store/networkContactsStore';
+import { useEventsStore } from '@/store/eventsStore';
 
 export interface EventData {
   eventName: string;
@@ -13,10 +14,12 @@ export interface EventData {
   completionRate: number;
   mostRecentDate: string;
   contacts: ReturnType<typeof useNetworkContactsStore.getState>['contacts'];
+  bannerUrl?: string;
 }
 
 export const useEventData = () => {
   const contacts = useNetworkContactsStore((state) => state.contacts);
+  const events = useEventsStore((state) => state.events);
 
   const eventData = useMemo(() => {
     const eventMap = new Map<string, EventData>();
@@ -25,6 +28,9 @@ export const useEventData = () => {
       const eventName = contact.event || 'Unspecified Event';
       
       if (!eventMap.has(eventName)) {
+        // Find matching event in events store to get banner
+        const matchingEvent = events.find(e => e.name === eventName);
+        
         eventMap.set(eventName, {
           eventName,
           contactCount: 0,
@@ -36,7 +42,8 @@ export const useEventData = () => {
           },
           completionRate: 0,
           mostRecentDate: contact.taggedAt,
-          contacts: []
+          contacts: [],
+          bannerUrl: matchingEvent?.imageUrl
         });
       }
 
@@ -55,7 +62,7 @@ export const useEventData = () => {
     });
 
     // Calculate completion rates and sort
-    const events = Array.from(eventMap.values()).map((event) => {
+    const eventsList = Array.from(eventMap.values()).map((event) => {
       const totalWithFollowUp = event.contactCount - event.followUpStats.none;
       event.completionRate = totalWithFollowUp > 0 
         ? (event.followUpStats.done / totalWithFollowUp) * 100 
@@ -64,10 +71,10 @@ export const useEventData = () => {
     });
 
     // Sort by most recent date
-    return events.sort((a, b) => 
+    return eventsList.sort((a, b) => 
       new Date(b.mostRecentDate).getTime() - new Date(a.mostRecentDate).getTime()
     );
-  }, [contacts]);
+  }, [contacts, events]);
 
   return eventData;
 };

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Mail, Phone, ExternalLink, Briefcase } from 'lucide-react';
+import { Mail, Phone, ExternalLink, Briefcase, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -33,14 +33,15 @@ export const TimelineContactCard = ({
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.05 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ delay: index * 0.03 }}
     >
-      <Card className="hover:border-primary/50 transition-all">
-        <CardContent className="p-4">
+      <Card className="hover:border-primary/50 hover:shadow-md transition-all duration-300 group">
+        <CardContent className="p-5">
           <div className="flex gap-4">
             {/* Avatar */}
-            <Avatar className="h-12 w-12 flex-shrink-0">
-              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+            <Avatar className="h-14 w-14 flex-shrink-0 ring-2 ring-background group-hover:ring-primary/20 transition-all">
+              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-bold text-lg">
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -104,8 +105,9 @@ export const TimelineContactCard = ({
                     onClick={onMarkDone}
                     size="sm" 
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 hover:bg-green-500/10 hover:text-green-600 hover:border-green-500/50 transition-colors"
                   >
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
                     Mark Done
                   </Button>
                 )}
@@ -114,7 +116,7 @@ export const TimelineContactCard = ({
                     onClick={onSnooze}
                     size="sm" 
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 hover:bg-blue-500/10 hover:text-blue-600 hover:border-blue-500/50 transition-colors"
                   >
                     Snooze
                   </Button>
@@ -123,6 +125,7 @@ export const TimelineContactCard = ({
                   onClick={onViewDetails}
                   size="sm" 
                   variant="ghost"
+                  className="hover:bg-primary/10"
                 >
                   <ExternalLink className="h-4 w-4" />
                 </Button>

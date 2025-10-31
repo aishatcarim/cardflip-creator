@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Filter, ArrowUpDown, CheckCircle2 } from 'lucide-react';
+import { X, Filter, ArrowUpDown, CheckCircle2, Calendar, Users, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,6 +11,7 @@ import { useNetworkContactsStore } from '@/store/networkContactsStore';
 import { format, addDays } from 'date-fns';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import defaultBanner from '@/assets/event-banners/default-banner.jpg';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -99,56 +100,137 @@ export const EventTimeline = ({ event, open, onClose }: EventTimelineProps) => {
   return (
     <>
       <Sheet open={open} onOpenChange={onClose}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl p-0">
-          <SheetHeader className="p-6 pb-4 border-b">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <SheetTitle className="text-2xl">{event.eventName}</SheetTitle>
-                <p className="text-sm text-muted-foreground">
-                  {format(new Date(event.mostRecentDate), 'MMMM d, yyyy')} • {event.contactCount} contacts
-                </p>
-                {totalWithFollowUp > 0 && (
-                  <p className="text-sm font-medium">
-                    {event.followUpStats.done} of {totalWithFollowUp} follow-ups completed
-                  </p>
-                )}
-              </div>
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
+        <SheetContent side="right" className="w-full sm:max-w-3xl p-0">
+          {/* Banner Header */}
+          <div className="relative h-48 overflow-hidden">
+            <motion.img
+              initial={{ scale: 1.2, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              src={event.bannerUrl || defaultBanner}
+              alt={event.eventName}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            
+            {/* Close Button */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onClose}
+              className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm"
+            >
+              <X className="h-5 w-5" />
+            </Button>
 
-            {/* Filters and Sort */}
-            <div className="flex gap-2 pt-4">
+            {/* Event Info Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <SheetTitle className="text-3xl font-bold mb-2 text-white">
+                  {event.eventName}
+                </SheetTitle>
+                <div className="flex flex-wrap items-center gap-4 text-sm text-white/90">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>{format(new Date(event.mostRecentDate), 'MMMM d, yyyy')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    <span>{event.contactCount} contacts</span>
+                  </div>
+                  {totalWithFollowUp > 0 && (
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      <span>{event.followUpStats.done} / {totalWithFollowUp} completed</span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          {totalWithFollowUp > 0 && (
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="px-6 pt-6 pb-4 border-b bg-muted/30"
+            >
+              <div className="grid grid-cols-4 gap-3">
+                <div className="bg-background rounded-lg p-3 text-center border">
+                  <div className="text-2xl font-bold text-primary">
+                    {Math.round(event.completionRate)}%
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Progress</div>
+                </div>
+                <div className="bg-background rounded-lg p-3 text-center border">
+                  <div className="text-2xl font-bold text-green-500">
+                    {event.followUpStats.done}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Done</div>
+                </div>
+                <div className="bg-background rounded-lg p-3 text-center border">
+                  <div className="text-2xl font-bold text-yellow-500">
+                    {event.followUpStats.pending}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Pending</div>
+                </div>
+                <div className="bg-background rounded-lg p-3 text-center border">
+                  <div className="text-2xl font-bold text-blue-500">
+                    {event.followUpStats.snoozed}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Snoozed</div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Filters and Sort */}
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="px-6 py-4 border-b bg-background/50 backdrop-blur-sm sticky top-0 z-10"
+          >
+            <div className="flex gap-2">
               <Select value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-[160px]">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
-                  <SelectItem value="snoozed">Snoozed</SelectItem>
-                  <SelectItem value="none">No Follow-up</SelectItem>
+                  <SelectItem value="all">All Contacts</SelectItem>
+                  <SelectItem value="pending">⏳ Pending</SelectItem>
+                  <SelectItem value="done">✓ Done</SelectItem>
+                  <SelectItem value="snoozed">😴 Snoozed</SelectItem>
+                  <SelectItem value="none">− No Follow-up</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={sort} onValueChange={(v) => setSort(v as SortType)}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-[160px]">
                   <ArrowUpDown className="h-4 w-4 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="tagged">Recent First</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="dueDate">Due Date</SelectItem>
+                  <SelectItem value="tagged">📅 Recent First</SelectItem>
+                  <SelectItem value="name">🔤 Name</SelectItem>
+                  <SelectItem value="dueDate">⏰ Due Date</SelectItem>
                 </SelectContent>
               </Select>
+              
+              <div className="ml-auto text-sm text-muted-foreground flex items-center">
+                {filteredAndSortedContacts.length} {filteredAndSortedContacts.length === 1 ? 'contact' : 'contacts'}
+              </div>
             </div>
-          </SheetHeader>
+          </motion.div>
 
-          <ScrollArea className="h-[calc(100vh-200px)]">
+          <ScrollArea className="h-[calc(100vh-400px)]">
             <div className="p-6 space-y-3">
               <AnimatePresence mode="popLayout">
                 {filteredAndSortedContacts.length > 0 ? (
@@ -164,12 +246,16 @@ export const EventTimeline = ({ event, open, onClose }: EventTimelineProps) => {
                   ))
                 ) : (
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-center py-12"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-16"
                   >
-                    <p className="text-muted-foreground">
-                      No contacts match your filters
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+                      <Users className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <p className="text-lg font-medium mb-1">No contacts found</p>
+                    <p className="text-sm text-muted-foreground">
+                      Try adjusting your filters
                     </p>
                   </motion.div>
                 )}
