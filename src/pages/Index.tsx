@@ -65,24 +65,36 @@ const Index = () => {
       {/* Header */}
       <AppHeader />
 
-      {/* Sub-header with controls */}
-      <div className="flex-shrink-0 px-4 py-3 flex items-center justify-between border-b border-border/50 backdrop-blur-sm">
-        <QRMenuPopover
-          qrCodeUrl={qrCodeUrl}
-          coloredQR={coloredQR}
-          onColoredQRChange={setColoredQR}
-          cardTitle={selectedCard?.title || "Profile"}
-        />
+      {/* Floating Controls */}
+      <div className="absolute top-20 right-4 z-40 flex items-center gap-2">
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <QRMenuPopover
+            qrCodeUrl={qrCodeUrl}
+            coloredQR={coloredQR}
+            onColoredQRChange={setColoredQR}
+            cardTitle={selectedCard?.title || "Profile"}
+          />
+        </motion.div>
         
-        <CardSelectorSheet
-          selectedCard={selectedCard}
-          visibleCards={visibleCards}
-          onSelectCard={setSelectedCardId}
-        />
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <CardSelectorSheet
+            selectedCard={selectedCard}
+            visibleCards={visibleCards}
+            onSelectCard={setSelectedCardId}
+          />
+        </motion.div>
       </div>
 
       {/* Main Content - Centered QR Display */}
-      <div className="flex-1 flex items-center justify-center px-4 pb-20">
+      <div className="flex-1 flex items-center justify-center px-4 pb-20 pt-4">
         {selectedCard ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
