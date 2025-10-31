@@ -1,26 +1,22 @@
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Eye, ChevronUp, ChevronDown, LayoutGrid, Calendar, BarChart3, Settings } from "lucide-react";
-import { useTheme } from "next-themes";
-import { motion, AnimatePresence } from "framer-motion";
+import { Eye, LayoutGrid, QrCode, Settings } from "lucide-react";
+import { motion } from "framer-motion";
 import { useSavedCardsStore } from "@/store/savedCardsStore";
 import { ViewCardModal } from "@/components/Profile/ViewCardModal";
 import Dock from "@/components/Dock/Dock";
 import { useNavigate } from "react-router-dom";
-import { DefaultsSheet } from "@/components/Profile/DefaultsSheet";
 import { QRMenuPopover } from "@/components/QR/QRMenuPopover";
 import { CardSelectorSheet } from "@/components/QR/CardSelectorSheet";
+import { AppHeader } from "@/components/Navigation/AppHeader";
 
 const Index = () => {
-  const { theme, setTheme } = useTheme();
   const { savedCards } = useSavedCardsStore();
   const navigate = useNavigate();
   const [selectedCardId, setSelectedCardId] = useState<string>("");
   const [coloredQR, setColoredQR] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
-  const [showDock, setShowDock] = useState(true);
-  const [showDefaults, setShowDefaults] = useState(false);
 
   // Get visible cards (not hidden)
   const visibleCards = savedCards.filter(card => !card.hidden);
@@ -39,24 +35,15 @@ const Index = () => {
 
   const dockItems = [
     { 
+      icon: <QrCode size={20} />, 
+      label: 'QR Showcase', 
+      onClick: () => navigate('/'),
+      className: 'bg-accent/30'
+    },
+    { 
       icon: <LayoutGrid size={20} />, 
-      label: 'Cards', 
+      label: 'Card Builder', 
       onClick: () => navigate('/cards')
-    },
-    { 
-      icon: <Calendar size={20} />, 
-      label: 'Events', 
-      onClick: () => console.log('Events - Coming soon!') 
-    },
-    { 
-      icon: <BarChart3 size={20} />, 
-      label: 'Analytics', 
-      onClick: () => console.log('Analytics - Coming soon!') 
-    },
-    { 
-      icon: <Settings size={20} />, 
-      label: 'Settings', 
-      onClick: () => setShowDefaults(true) 
     },
   ];
 
@@ -75,8 +62,11 @@ const Index = () => {
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* Minimal Header */}
-      <header className="flex-shrink-0 px-4 py-3 flex items-center justify-between">
+      {/* Header */}
+      <AppHeader />
+
+      {/* Sub-header with controls */}
+      <div className="flex-shrink-0 px-4 py-3 flex items-center justify-between border-b border-border/50 backdrop-blur-sm">
         <QRMenuPopover
           qrCodeUrl={qrCodeUrl}
           coloredQR={coloredQR}
@@ -84,27 +74,12 @@ const Index = () => {
           cardTitle={selectedCard?.title || "Profile"}
         />
         
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="rounded-full hover:bg-accent/10"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-          </Button>
-          
-          <CardSelectorSheet
-            selectedCard={selectedCard}
-            visibleCards={visibleCards}
-            onSelectCard={setSelectedCardId}
-          />
-        </div>
-      </header>
+        <CardSelectorSheet
+          selectedCard={selectedCard}
+          visibleCards={visibleCards}
+          onSelectCard={setSelectedCardId}
+        />
+      </div>
 
       {/* Main Content - Centered QR Display */}
       <div className="flex-1 flex items-center justify-center px-4 pb-20">
@@ -240,40 +215,22 @@ const Index = () => {
         />
       )}
 
-      {/* Defaults Sheet */}
-      <DefaultsSheet open={showDefaults} onOpenChange={setShowDefaults} />
-
-      {/* Dock Navigation */}
-      <AnimatePresence>
-        {showDock && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none"
-          >
-            <div className="pointer-events-auto">
-              <Dock 
-                items={dockItems}
-                panelHeight={68}
-                baseItemSize={50}
-                magnification={70}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Dock Toggle Button */}
-      <Button
-        variant="secondary"
-        size="icon"
-        className="fixed bottom-4 right-4 z-50 rounded-full shadow-lg h-12 w-12"
-        onClick={() => setShowDock(!showDock)}
+      {/* Dock Navigation - Always visible */}
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+        className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
       >
-        {showDock ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
-      </Button>
+        <div className="pointer-events-auto">
+          <Dock 
+            items={dockItems}
+            panelHeight={68}
+            baseItemSize={50}
+            magnification={70}
+          />
+        </div>
+      </motion.div>
     </div>
   );
 };

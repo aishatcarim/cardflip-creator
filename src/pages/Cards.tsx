@@ -5,35 +5,36 @@ import { FrontFields } from "@/components/LeftPane/FrontFields";
 import { BackFields } from "@/components/LeftPane/BackFields";
 import { DesignControls } from "@/components/RightPane/DesignControls";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Moon, Sun, ChevronLeft, ChevronRight, Calendar, BarChart3, Settings, ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, LayoutGrid, QrCode } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "next-themes";
 import { useState } from "react";
 import Dock from "@/components/Dock/Dock";
 import { SavedCardsList } from "@/components/Profile/SavedCardsList";
 import { DefaultsSheet } from "@/components/Profile/DefaultsSheet";
+import { AppHeader } from "@/components/Navigation/AppHeader";
+import { useNavigate } from "react-router-dom";
 
 const Cards = () => {
   const { cardData } = useCardStore();
   const { isFlipped } = cardData;
-  const { theme, setTheme } = useTheme();
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
-  const [showDock, setShowDock] = useState(true);
   const [showHidden, setShowHidden] = useState(false);
   const [showDefaults, setShowDefaults] = useState(false);
+  const [currentTab, setCurrentTab] = useState("builder");
+  const navigate = useNavigate();
 
   const dockItems = [
     { 
-      icon: <Calendar size={20} />, 
-      label: 'Events', 
-      onClick: () => console.log('Events - Coming soon!') 
+      icon: <QrCode size={20} />, 
+      label: 'QR Showcase', 
+      onClick: () => navigate('/')
     },
     { 
-      icon: <BarChart3 size={20} />, 
-      label: 'Analytics', 
-      onClick: () => console.log('Analytics - Coming soon!') 
+      icon: <LayoutGrid size={20} />, 
+      label: 'Card Builder', 
+      onClick: () => navigate('/cards'),
+      className: 'bg-accent/30'
     },
     { 
       icon: <Settings size={20} />, 
@@ -44,47 +45,17 @@ const Cards = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Header */}
-      <header className="flex-shrink-0 border-b border-border bg-card">
-        <div className="flex items-center justify-between px-4 md:px-6 py-4">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">NC</span>
-            </div>
-            <div className="hidden sm:block">
-              <h1 className="text-base md:text-lg font-semibold text-foreground">
-                Networking Co-pilot
-              </h1>
-              <p className="text-xs text-muted-foreground hidden md:block">Profile Card Builder</p>
-            </div>
-          </div>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="rounded-lg"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4 md:h-5 md:w-5" />
-            ) : (
-              <Moon className="h-4 w-4 md:h-5 md:w-5" />
-            )}
-          </Button>
-        </div>
-      </header>
+      {/* Header with centered tabs */}
+      <AppHeader 
+        showCardsTabs 
+        currentTab={currentTab}
+        onTabChange={setCurrentTab}
+      />
 
-      {/* Tabs Navigation */}
-      <Tabs defaultValue="builder" className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex justify-center border-b border-border bg-card px-4">
-          <TabsList className="bg-transparent">
-            <TabsTrigger value="builder">Builder</TabsTrigger>
-            <TabsTrigger value="saved-cards">Saved Cards</TabsTrigger>
-          </TabsList>
-        </div>
-
-        {/* Builder Tab */}
-        <TabsContent value="builder" className="flex-1 flex overflow-hidden m-0 data-[state=inactive]:hidden">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Builder View */}
+        {currentTab === "builder" && (
           <div className="flex-1 flex overflow-hidden relative">
         {/* Left Pane - Text Editor */}
         <motion.div
@@ -209,10 +180,10 @@ const Cards = () => {
           </div>
         </motion.div>
           </div>
-        </TabsContent>
+        )}
 
-        {/* Saved Cards Tab */}
-        <TabsContent value="saved-cards" className="flex-1 overflow-hidden m-0 data-[state=inactive]:hidden">
+        {/* Saved Cards View */}
+        {currentTab === "saved-cards" && (
           <div className="h-full overflow-y-auto">
             <div className="container mx-auto px-4 py-6">
               <div className="flex justify-end mb-6">
@@ -238,43 +209,28 @@ const Cards = () => {
               <SavedCardsList showHidden={showHidden} />
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
 
       {/* Defaults Sheet */}
       <DefaultsSheet open={showDefaults} onOpenChange={setShowDefaults} />
 
-      {/* Dock Navigation */}
-      <AnimatePresence>
-        {showDock && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none"
-          >
-            <div className="pointer-events-auto">
-              <Dock 
-                items={dockItems}
-                panelHeight={68}
-                baseItemSize={50}
-                magnification={70}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Dock Toggle Button */}
-      <Button
-        variant="secondary"
-        size="icon"
-        className="fixed bottom-4 right-4 z-50 rounded-full shadow-lg h-12 w-12"
-        onClick={() => setShowDock(!showDock)}
+      {/* Dock Navigation - Always visible */}
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+        className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
       >
-        {showDock ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
-      </Button>
+        <div className="pointer-events-auto">
+          <Dock 
+            items={dockItems}
+            panelHeight={68}
+            baseItemSize={50}
+            magnification={70}
+          />
+        </div>
+      </motion.div>
     </div>
   );
 };
