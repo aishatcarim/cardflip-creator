@@ -41,39 +41,51 @@ export const StatsCard = ({ title, value, subtitle, icon: Icon, trend, index = 0
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.3 }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      transition={{ delay: index * 0.1, duration: 0.5 }}
+      whileHover={{ y: -6, scale: 1.02 }}
     >
-      <Card className="p-6 transition-all duration-300 hover:shadow-xl hover:border-primary/20 cursor-default group">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <p className="text-sm text-muted-foreground mb-1">{title}</p>
-            <p className="text-3xl font-bold text-foreground mb-1">
-              {typeof value === 'number' ? displayValue : value}
-            </p>
-            {subtitle && (
-              <p className="text-xs text-muted-foreground">{subtitle}</p>
-            )}
-            {trend && (
-              <motion.div 
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 + (index * 0.1) }}
-                className={`flex items-center gap-1 text-xs mt-2 font-medium ${
-                  trend.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                }`}
+      <Card className="relative overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-default bg-gradient-to-br from-card to-card/50 border-2 group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors duration-300" />
+        <div className="p-6 relative">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-2">{title}</p>
+              <motion.p
+                className="text-4xl font-bold mt-2 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent"
+                key={displayValue}
+                initial={{ scale: 1.3, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15 }}
               >
-                <span>{trend.isPositive ? '↑' : '↓'}</span>
-                <span>{Math.abs(trend.value)}%</span>
-              </motion.div>
-            )}
+                {typeof value === 'number' ? displayValue.toLocaleString() : value}
+              </motion.p>
+              {subtitle && (
+                <p className="text-sm text-muted-foreground mt-2 font-medium">{subtitle}</p>
+              )}
+              {trend && (
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + (index * 0.1) }}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold mt-3 ${
+                    trend.isPositive 
+                      ? 'bg-green-500/10 text-green-600 dark:text-green-500' 
+                      : 'bg-red-500/10 text-red-600 dark:text-red-500'
+                  }`}
+                >
+                  <span>{trend.isPositive ? '↑' : '↓'}</span>
+                  <span>{Math.abs(trend.value)}% vs last month</span>
+                </motion.div>
+              )}
+            </div>
+            <motion.div 
+              className="p-4 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 shadow-sm group-hover:shadow-md group-hover:from-primary/20 group-hover:to-primary/10 transition-all duration-300"
+              whileHover={{ rotate: 15, scale: 1.1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Icon className="h-7 w-7 text-primary" />
+            </motion.div>
           </div>
-          <motion.div 
-            className="p-3 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 group-hover:from-primary/20 group-hover:to-primary/10 transition-all duration-300"
-            whileHover={{ rotate: [0, -10, 10, -10, 0], transition: { duration: 0.5 } }}
-          >
-            <Icon className="h-6 w-6 text-primary" />
-          </motion.div>
         </div>
       </Card>
     </motion.div>

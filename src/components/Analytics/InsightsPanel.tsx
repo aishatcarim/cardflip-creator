@@ -25,10 +25,12 @@ export const InsightsPanel = ({ insights, totalContacts }: InsightsPanelProps) =
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5, delay: 0.4 }}
     >
-      <Card className="p-6 hover:shadow-lg transition-shadow duration-300">
-        <div className="flex items-center gap-2 mb-4">
-          <Award className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Insights & Achievements</h3>
+      <Card className="p-8 hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 border-2">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Award className="h-5 w-5 text-primary" />
+          </div>
+          <h3 className="text-xl font-bold">Insights</h3>
         </div>
 
         <div className="space-y-4">

@@ -37,12 +37,17 @@ export const ContactsGrowthChart = ({ data }: ContactsGrowthChartProps) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="p-6 hover:shadow-lg transition-shadow duration-300">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Contacts Growth Over Time</h3>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <TrendingUp className="h-4 w-4 text-green-600" />
-            <span className="text-green-600 font-medium">Growing</span>
+      <Card className="p-8 hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 border-2">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-primary" />
+            </div>
+            <h3 className="text-xl font-bold">Network Growth</h3>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10">
+            <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-500" />
+            <span className="text-sm text-green-600 dark:text-green-500 font-semibold">Growing</span>
           </div>
         </div>
         <ResponsiveContainer width="100%" height={300}>
