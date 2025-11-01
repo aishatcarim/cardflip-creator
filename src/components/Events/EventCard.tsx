@@ -114,17 +114,26 @@ export const EventCard = ({ event, onViewTimeline, index }: EventCardProps) => {
 
               {/* Status Breakdown */}
               <div className="grid grid-cols-3 gap-2 text-xs">
-                <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-green-500/10">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                  <span className="font-medium">{event.followUpStats.done}</span>
+                <div className="flex flex-col items-center gap-1 px-2 py-2 rounded-md bg-green-500/10">
+                  <div className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                    <span className="font-bold text-green-600">{event.followUpStats.done}</span>
+                  </div>
+                  <span className="text-[10px] text-green-600 font-medium">Done</span>
                 </div>
-                <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-yellow-500/10">
-                  <Clock className="h-3.5 w-3.5 text-yellow-500" />
-                  <span className="font-medium">{event.followUpStats.pending}</span>
+                <div className="flex flex-col items-center gap-1 px-2 py-2 rounded-md bg-yellow-500/10">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5 text-yellow-500" />
+                    <span className="font-bold text-yellow-600">{event.followUpStats.pending}</span>
+                  </div>
+                  <span className="text-[10px] text-yellow-600 font-medium">Pending</span>
                 </div>
-                <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-blue-500/10">
-                  <Moon className="h-3.5 w-3.5 text-blue-500" />
-                  <span className="font-medium">{event.followUpStats.snoozed}</span>
+                <div className="flex flex-col items-center gap-1 px-2 py-2 rounded-md bg-blue-500/10">
+                  <div className="flex items-center gap-1">
+                    <Moon className="h-3.5 w-3.5 text-blue-500" />
+                    <span className="font-bold text-blue-600">{event.followUpStats.snoozed}</span>
+                  </div>
+                  <span className="text-[10px] text-blue-600 font-medium">Snoozed</span>
                 </div>
               </div>
             </div>

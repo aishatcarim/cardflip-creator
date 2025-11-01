@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import conferenceBanner from '@/assets/event-banners/conference-default.jpg';
+import meetupBanner from '@/assets/event-banners/meetup-default.jpg';
 
 export interface Event {
   id: string;
@@ -27,7 +29,7 @@ const mockEvents: Event[] = [
     description: 'Annual technology conference featuring the latest innovations in AI, cloud computing, and software development.',
     date: '2024-03-15',
     location: 'San Francisco Convention Center',
-    imageUrl: '/src/assets/event-banners/conference-default.jpg',
+    imageUrl: conferenceBanner,
     createdAt: '2024-03-01T10:00:00.000Z',
   },
   {
@@ -36,7 +38,7 @@ const mockEvents: Event[] = [
     description: 'Connect with founders, investors, and innovators in the startup ecosystem.',
     date: '2024-04-20',
     location: 'Silicon Valley Hub',
-    imageUrl: '/src/assets/event-banners/meetup-default.jpg',
+    imageUrl: meetupBanner,
     createdAt: '2024-04-01T10:00:00.000Z',
   },
 ];
