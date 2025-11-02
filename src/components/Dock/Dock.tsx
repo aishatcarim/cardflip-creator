@@ -148,8 +148,8 @@ export default function Dock({
 
   return (
     <motion.div 
-      style={{ height: isReady ? height : panelHeight, scrollbarWidth: 'none' }} 
-      className="mx-2 flex max-w-full items-center justify-center"
+      style={{ height: isReady ? height : panelHeight }} 
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-end justify-center pointer-events-none"
     >
       <motion.div
         onMouseMove={({ pageX }) => {
@@ -177,7 +177,7 @@ export default function Dock({
             rafIdRef.current = null;
           }
         }}
-        className={`${className} flex items-end w-fit gap-4 rounded-2xl border-border border bg-card/70 backdrop-blur-xl pb-2 px-4 shadow-2xl will-change-[height]`}
+        className={`${className} flex items-end w-fit gap-4 rounded-2xl border-border border bg-card/80 backdrop-blur-xl pb-2 px-4 shadow-2xl will-change-[height] pointer-events-auto`}
         style={{ height: panelHeight }}
         role="toolbar"
         aria-label="Application dock"
