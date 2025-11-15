@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { NetworkContact } from "../../../store/networkContactsStore";
+import { NetworkContact } from "@contacts/store/networkContactsStore";
 import { Card } from "@shared/ui/card";
 import { Button } from "@shared/ui/button";
-import { Edit, Trash2, Download } from "lucide-react";
+import { Badge } from "@shared/ui/badge";
+import { Edit, Trash2, Download, Flame, Clock, Sparkles, Sparkles as AIFollowUp, Mail, Linkedin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   AlertDialog,
@@ -15,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@shared/ui/alert-dialog";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface ContactCardProps {
   contact: NetworkContact;
@@ -59,8 +61,67 @@ const getEventTextColor = (event: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
+// Get urgency indicator for contact
+const getUrgencyIndicator = (contact: NetworkContact) => {
+  const isOverdue = contact.followUpDueDate &&
+                   new Date(contact.followUpDueDate) < new Date();
+
+  if (isOverdue) {
+    return {
+      icon: <Flame className="h-3 w-3" />,
+      label: "Overdue",
+      variant: "destructive" as const
+    };
+  }
+
+  const daysUntil = getDaysUntil(contact.followUpDueDate);
+  if (daysUntil <= 3) {
+    return {
+      icon: <Clock className="h-3 w-3" />,
+      label: "Due Soon",
+      variant: "warning" as const
+    };
+  }
+
+  const daysSince = getDaysSince(contact.taggedAt);
+  if (daysSince <= 2) {
+    return {
+      icon: <Sparkles className="h-3 w-3" />,
+      label: "New",
+      variant: "default" as const
+    };
+  }
+
+  return null;
+};
+
+const getDaysSince = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  return Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+const getDaysUntil = (dateString?: string) => {
+  if (!dateString) return Infinity;
+  const date = new Date(dateString);
+  const now = new Date();
+  return Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+};
+
 export const ContactCard = ({ contact, index, onEdit, onDelete, onExport }: ContactCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const navigate = useNavigate();
+
+  const urgency = getUrgencyIndicator(contact);
+  const daysSince = getDaysSince(contact.taggedAt);
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on buttons
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    navigate(`/contacts/${contact.id}`);
+  };
 
   return (
     <>
@@ -73,12 +134,26 @@ export const ContactCard = ({ contact, index, onEdit, onDelete, onExport }: Cont
           className={`p-4 h-full hover:shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer ${getEventColor(
             contact.event
           )}`}
+          onClick={handleCardClick}
         >
           <div className="space-y-3">
-            {/* Contact Name */}
-            <h3 className="font-bold text-lg text-foreground truncate">
-              {contact.contactName}
-            </h3>
+            {/* Header with Status Badge */}
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="font-bold text-lg text-foreground truncate">
+                  {contact.contactName}
+                </h3>
+                <p className="text-sm text-muted-foreground truncate">
+                  {contact.company}
+                </p>
+              </div>
+              {urgency && (
+                <Badge variant={urgency.variant} className="gap-1">
+                  {urgency.icon}
+                  {urgency.label}
+                </Badge>
+              )}
+            </div>
 
             {/* Event Badge */}
             <div className="flex items-center gap-2 flex-wrap">
@@ -132,19 +207,69 @@ export const ContactCard = ({ contact, index, onEdit, onDelete, onExport }: Cont
               </p>
             )}
 
-            {/* Tagged Date */}
-            <p className="text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(contact.taggedAt), {
-                addSuffix: true,
-              })}
-            </p>
+            {/* Context & Date */}
+            <div className="text-xs text-muted-foreground">
+              <p>{contact.event} • {daysSince} days ago</p>
+              {contact.notes && (
+                <p className="line-clamp-2 mt-1 italic">
+                  "{contact.notes.substring(0, 60)}{contact.notes.length > 60 ? '...' : ''}"
+                </p>
+              )}
+            </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-1 pt-2 border-t border-border/50">
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2 pt-3 border-t border-border/50">
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/contacts/${contact.id}?action=ai-followup`);
+                }}
+                className="gap-1 flex-1"
+              >
+                <AIFollowUp className="h-3 w-3" />
+                AI Follow-Up
+              </Button>
+
+              {contact.email && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.location.href = `mailto:${contact.email}`;
+                  }}
+                  className="gap-1"
+                >
+                  <Mail className="h-3 w-3" />
+                </Button>
+              )}
+
+              {contact.quickLinks?.find(link => link.icon === 'Linkedin') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const linkedin = contact.quickLinks.find(link => link.icon === 'Linkedin');
+                    if (linkedin) window.open(linkedin.url, '_blank');
+                  }}
+                  className="gap-1"
+                >
+                  <Linkedin className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+
+            {/* Secondary Actions */}
+            <div className="flex items-center gap-1 pt-2">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onEdit(contact)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(contact);
+                }}
                 className="flex-1"
               >
                 <Edit className="h-3 w-3 mr-1" />
@@ -153,16 +278,22 @@ export const ContactCard = ({ contact, index, onEdit, onDelete, onExport }: Cont
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onExport(contact.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onExport(contact.id);
+                }}
                 className="flex-1"
               >
                 <Download className="h-3 w-3 mr-1" />
-                vCard
+                Export
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowDeleteDialog(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDeleteDialog(true);
+                }}
                 className="flex-1 text-destructive hover:text-destructive"
               >
                 <Trash2 className="h-3 w-3 mr-1" />

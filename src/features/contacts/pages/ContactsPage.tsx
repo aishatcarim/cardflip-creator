@@ -1,14 +1,18 @@
 import { useState, useMemo } from "react";
-import { useNetworkContactsStore } from "../store/networkContactsStore";
+import { useNetworkContactsStore } from "@contacts/store/networkContactsStore";
 import { AppHeader } from '@shared/components';
 import { ContactSearchBar } from "../components/ContactsList/ContactSearchBar";
 import { ContactFilters } from "../components/ContactsList/ContactFilters";
 import { ContactCard } from "../components/ContactsList/ContactCard";
 import { ContactTagModal } from "../components/ContactActions/ContactTagModal";
 import { ExportMenu } from "../components/ContactActions/ExportMenu";
+import { ContactsPriorityQueue } from "../components/ContactDashboard/ContactsPriorityQueue";
+import { ContactsInsights } from "../components/ContactDashboard/ContactsInsights";
+import { ContactsByEvent } from "../components/ContactDashboard/ContactsByEvent";
 import { Button } from "@shared/ui/button";
 import { Checkbox } from "@shared/ui/checkbox";
-import { Users, LayoutGrid, QrCode, Trash2, Download, UserPlus, BarChart3, Calendar, Eye, EyeOff } from "lucide-react";
+import { Badge } from "@shared/ui/badge";
+import { Users, QrCode, UserPlus, Download, Sparkles, BarChart3, LayoutGrid, Calendar, EyeOff, Eye } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Dock } from '@shared/components';
@@ -44,6 +48,49 @@ const ContactsPage = () => {
   const [showTagModal, setShowTagModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [dockVisible, setDockVisible] = useState(true);
+
+  // Helper functions for priority calculation
+  const getDaysSince = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    return Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const getDaysUntil = (dateString?: string) => {
+    if (!dateString) return Infinity;
+    const date = new Date(dateString);
+    const now = new Date();
+    return Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  // Calculate priority contacts (needs attention)
+  const priorityContacts = useMemo(() => {
+    return contacts.filter(c => {
+      const daysSince = getDaysSince(c.taggedAt);
+      const isOverdue = c.followUpDueDate &&
+                       new Date(c.followUpDueDate) < new Date();
+      const isDueSoon = c.followUpDueDate &&
+                       getDaysUntil(c.followUpDueDate) <= 3;
+      const isRecent = daysSince <= 2;
+
+      return isOverdue || isDueSoon || isRecent;
+    }).sort((a, b) => {
+      // Sort by urgency
+      const aOverdue = a.followUpDueDate && new Date(a.followUpDueDate) < new Date();
+      const bOverdue = b.followUpDueDate && new Date(b.followUpDueDate) < new Date();
+
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+
+      const aDueSoon = a.followUpDueDate && getDaysUntil(a.followUpDueDate) <= 3;
+      const bDueSoon = b.followUpDueDate && getDaysUntil(b.followUpDueDate) <= 3;
+
+      if (aDueSoon && !bDueSoon) return -1;
+      if (!aDueSoon && bDueSoon) return 1;
+
+      return new Date(b.taggedAt).getTime() - new Date(a.taggedAt).getTime();
+    });
+  }, [contacts]);
 
   // Extract unique events and industries
   const events = useMemo(
@@ -187,60 +234,153 @@ const ContactsPage = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <AppHeader />
 
-      <div className="flex-1 container mx-auto px-4 py-6 pb-24">
-        {/* Header with Actions */}
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">My Network</h1>
-              <p className="text-muted-foreground mt-1">
-                {filteredContacts.length} contact{filteredContacts.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => {
-                  setEditingContact(null);
-                  setShowTagModal(true);
-                }}
-                className="gap-2"
-              >
-                <UserPlus className="h-4 w-4" />
-                Add Contact
+      <div className="flex-1 container mx-auto px-4 py-6 pb-24 space-y-8">
+        {/* Header Section */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">My Network</h1>
+            <p className="text-muted-foreground mt-1">
+              {contacts.length} total connections
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => {
+                setEditingContact(null);
+                setShowTagModal(true);
+              }}
+              className="gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              Add Contact
+            </Button>
+            <ExportMenu
+              onExportCSV={handleExportCSV}
+              onExportVCards={handleExportAllVCards}
+            />
+          </div>
+        </div>
+
+        {/* Priority Queue - Needs Attention */}
+        {priorityContacts.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Needs Attention</h2>
+                  <p className="text-muted-foreground">
+                    {priorityContacts.length} contact{priorityContacts.length !== 1 ? 's' : ''} requiring immediate action
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" className="gap-2">
+                View All
+                <Badge variant="secondary">{priorityContacts.length}</Badge>
               </Button>
-              <ExportMenu
-                onExportCSV={handleExportCSV}
-                onExportVCards={handleExportAllVCards}
+            </div>
+            <ContactsPriorityQueue contacts={priorityContacts} />
+          </motion.section>
+        )}
+
+        {/* Insights Dashboard */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <ContactsInsights contacts={contacts} />
+        </motion.section>
+
+        {/* Event-Based Organization */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                📅
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">By Event</h2>
+                <p className="text-muted-foreground">Organize contacts by networking events</p>
+              </div>
+            </div>
+          </div>
+          <ContactsByEvent contacts={contacts} />
+        </motion.section>
+
+        {/* All Contacts Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center">
+                👥
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">All Contacts</h2>
+                <p className="text-muted-foreground">
+                  {filteredContacts.length} contact{filteredContacts.length !== 1 ? 's' : ''} in your network
+                  {selectedContacts.length > 0 && ` (${selectedContacts.length} selected)`}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <ContactSearchBar value={searchQuery} onChange={setSearchQuery} />
+              <ContactFilters
+                events={events}
+                industries={industries}
+                selectedEvent={selectedEvent}
+                selectedIndustry={selectedIndustry}
+                sortBy={sortBy}
+                onEventChange={setSelectedEvent}
+                onIndustryChange={setSelectedIndustry}
+                onSortChange={setSortBy}
+                onClearFilters={() => {
+                  setSelectedEvent("all");
+                  setSelectedIndustry("all");
+                  setSearchQuery("");
+                }}
               />
             </div>
           </div>
 
-          {/* Search */}
-          <ContactSearchBar value={searchQuery} onChange={setSearchQuery} />
-
-          {/* Bulk Actions */}
+          {/* Bulk Actions Toolbar */}
           {selectedContacts.length > 0 && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 p-3 bg-accent/10 rounded-lg border border-accent/20"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center gap-3 p-4 bg-gradient-to-r from-accent/10 to-accent/5 rounded-xl border border-accent/20 mb-6"
             >
               <Checkbox
                 checked={selectedContacts.length === filteredContacts.length}
                 onCheckedChange={handleSelectAll}
+                className="border-accent"
               />
-              <span className="text-sm text-foreground">
-                {selectedContacts.length} selected
+              <span className="text-foreground font-medium">
+                {selectedContacts.length} contact{selectedContacts.length !== 1 ? 's' : ''} selected
               </span>
               <div className="ml-auto flex items-center gap-2">
                 <Button
                   onClick={handleExportSelectedVCards}
                   variant="outline"
                   size="sm"
-                  className="gap-2"
+                  className="gap-2 hover:bg-accent/20"
                 >
                   <Download className="h-4 w-4" />
-                  Export vCard
+                  Export vCards
                 </Button>
                 <Button
                   variant="destructive"
@@ -248,88 +388,84 @@ const ContactsPage = () => {
                   onClick={() => setShowDeleteDialog(true)}
                   className="gap-2"
                 >
-                  <Trash2 className="h-4 w-4" />
-                  Delete
+                  🗑️ Delete Selected
                 </Button>
               </div>
             </motion.div>
           )}
-        </div>
-
-        {/* Main Content */}
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Filters Sidebar */}
-          <aside className="lg:w-64 flex-shrink-0">
-            <ContactFilters
-              events={events}
-              industries={industries}
-              selectedEvent={selectedEvent}
-              selectedIndustry={selectedIndustry}
-              sortBy={sortBy}
-              onEventChange={setSelectedEvent}
-              onIndustryChange={setSelectedIndustry}
-              onSortChange={setSortBy}
-              onClearFilters={() => {
-                setSelectedEvent("all");
-                setSelectedIndustry("all");
-              }}
-            />
-          </aside>
 
           {/* Contacts Grid */}
-          <div className="flex-1">
-            {filteredContacts.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center py-20 text-center"
-              >
-                <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mb-4">
-                  <Users className="h-10 w-10 text-accent" />
-                </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">
-                  {searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
-                    ? "No contacts found"
-                    : "No contacts yet"}
-                </h3>
-                <p className="text-muted-foreground max-w-sm mb-6">
-                  {searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
-                    ? "Try adjusting your filters or search query"
-                    : "Start building your network by tagging contacts when they scan your QR code"}
-                </p>
+          {filteredContacts.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center justify-center py-20 text-center"
+            >
+              <div className="w-20 h-20 bg-gradient-to-br from-muted to-muted/50 rounded-full flex items-center justify-center mb-6">
+                <Users className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <h3 className="text-2xl font-bold text-foreground mb-3">
+                {searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
+                  ? "No contacts found"
+                  : "Your network is empty"}
+              </h3>
+              <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
+                {searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
+                  ? "Try adjusting your search or filters to find what you're looking for."
+                  : "Start building meaningful connections! Your networking journey begins with the first QR scan."}
+              </p>
+              <div className="flex gap-3">
                 {!searchQuery && selectedEvent === "all" && selectedIndustry === "all" && (
                   <Button onClick={() => navigate("/")} className="gap-2">
                     <QrCode className="h-4 w-4" />
                     Go to QR Showcase
                   </Button>
                 )}
-              </motion.div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filteredContacts.map((contact, index) => (
-                  <div key={contact.id} className="relative">
-                    {selectedContacts.length > 0 && (
-                      <div className="absolute top-2 left-2 z-10">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setEditingContact(null);
+                    setShowTagModal(true);
+                  }}
+                  className="gap-2"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Add First Contact
+                </Button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+            >
+              {filteredContacts.map((contact, index) => (
+                <div key={contact.id} className="relative">
+                  {selectedContacts.length > 0 && (
+                    <div className="absolute -top-2 -left-2 z-20">
+                      <div className="bg-background border-2 border-accent rounded-full p-1 shadow-lg">
                         <Checkbox
                           checked={selectedContacts.includes(contact.id)}
                           onCheckedChange={() => handleSelectContact(contact.id)}
-                          className="bg-background"
+                          className="border-accent data-[state=checked]:bg-accent"
                         />
                       </div>
-                    )}
-                    <ContactCard
-                      contact={contact}
-                      index={index}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      onExport={exportContactVCard}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+                    </div>
+                  )}
+                  <ContactCard
+                    contact={contact}
+                    index={index}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onExport={exportContactVCard}
+                  />
+                </div>
+              ))}
+            </motion.div>
+          )}
+        </motion.section>
       </div>
 
       {/* Dock Navigation */}

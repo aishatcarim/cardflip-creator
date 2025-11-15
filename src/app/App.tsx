@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { QRShowcasePage, CardsPage, ProfileViewerPage } from "@features/profile";
-import { ContactsPage } from "@features/contacts";
+import { ContactsPage, ContactDetailPage } from "@features/contacts";
 import { EventsPage, EventDetailPage } from "@features/events";
 import { AnalyticsPage } from "@features/analytics";
 import NotFoundPage from "./router/NotFoundPage";
@@ -23,6 +23,7 @@ const App = () => (
             <Route path="/" element={<QRShowcasePage />} />
             <Route path="/cards" element={<CardsPage />} />
             <Route path="/contacts" element={<ContactsPage />} />
+            <Route path="/contacts/:contactId" element={<ContactDetailPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/events/:eventId" element={<EventDetailPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
