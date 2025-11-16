@@ -77,7 +77,7 @@ const QRShowcasePage = () => {
       </div>
 
       {/* Main Content - Centered QR Display */}
-      <div className="flex-1 flex items-center justify-center px-4 pb-20 pt-4">
+      <div className="flex-1 flex items-center justify-center px-4 pb-20 pt-4 min-h-[70vh]">
         {selectedCard ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -140,12 +140,12 @@ const QRShowcasePage = () => {
                 <QRCodeSVG
                   id="qr-code-svg"
                   value={qrCodeUrl}
-                  size={300}
+                  size={400}
                   level="H"
                   includeMargin={true}
                   fgColor={coloredQR ? "hsl(var(--accent))" : "#000000"}
                   bgColor="transparent"
-                  className="w-full h-auto"
+                  className="w-full h-auto max-w-[400px]"
                 />
                 
                 {/* Center Logo */}

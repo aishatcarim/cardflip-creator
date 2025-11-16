@@ -15,7 +15,7 @@ import { Checkbox } from "@shared/ui/checkbox";
 import { Badge } from "@shared/ui/badge";
 import { Users, QrCode, UserPlus, Download, Sparkles, BarChart3, LayoutGrid, Calendar, EyeOff, Eye } from "lucide-react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useRef } from "react";
 import { Dock } from '@shared/components';
 import { MobileTabBar } from '@shared/components';
@@ -34,6 +34,7 @@ import {
 
 const ContactsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
   const mainContentRef = useRef<HTMLDivElement>(null);
   const {
@@ -225,22 +226,26 @@ const ContactsPage = () => {
     {
       icon: <QrCode size={20} />,
       label: "Profile",
+      path: "/",
       onClick: () => navigate("/"),
     },
     {
       icon: <Users size={20} />,
       label: "Contacts",
+      path: "/contacts",
       onClick: () => navigate("/contacts"),
       className: "bg-accent/30",
     },
     {
       icon: <Calendar size={20} />,
       label: "Events",
+      path: "/events",
       onClick: () => navigate("/events"),
     },
     {
       icon: <BarChart3 size={20} />,
       label: "Analytics",
+      path: "/analytics",
       onClick: () => navigate("/analytics"),
     },
   ];
@@ -489,6 +494,7 @@ const ContactsPage = () => {
             <div className="pointer-events-auto">
               <Dock
                 items={dockItems}
+                activeItem={location.pathname}
                 panelHeight={68}
                 baseItemSize={50}
                 magnification={70}

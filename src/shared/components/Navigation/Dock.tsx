@@ -12,9 +12,10 @@ interface DockItemProps {
   distance: number;
   magnification: number;
   baseItemSize: number;
+  isActive?: boolean;
 }
 
-function DockItem({ children, className = '', onClick, mouseX, spring, distance, magnification, baseItemSize }: DockItemProps) {
+function DockItem({ children, className = '', onClick, mouseX, spring, distance, magnification, baseItemSize, isActive = false }: DockItemProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isHovered = useMotionValue(0);
 
@@ -41,7 +42,9 @@ function DockItem({ children, className = '', onClick, mouseX, spring, distance,
       onFocus={() => isHovered.set(1)}
       onBlur={() => isHovered.set(0)}
       onClick={onClick}
-      className={`relative inline-flex items-center justify-center rounded-lg bg-card/80 backdrop-blur-md border-border border shadow-lg cursor-pointer hover:bg-accent/20 transition-colors will-change-[width,height] ${className}`}
+      className={`relative inline-flex items-center justify-center rounded-lg bg-card/80 backdrop-blur-md border-border border shadow-lg cursor-pointer hover:bg-accent/20 transition-colors will-change-[width,height] ${
+        isActive ? 'bg-accent/30 border-accent shadow-accent/20' : ''
+      } ${className}`}
       tabIndex={0}
       role="button"
       aria-haspopup="true"
@@ -101,10 +104,12 @@ export interface DockItemConfig {
   label: string;
   onClick: () => void;
   className?: string;
+  path?: string; // optional path for active state detection
 }
 
 interface DockProps {
   items: DockItemConfig[];
+  activeItem?: string; // path or identifier of active item
   className?: string;
   spring?: { mass: number; stiffness: number; damping: number };
   magnification?: number;
@@ -116,6 +121,7 @@ interface DockProps {
 
 export default function Dock({
   items,
+  activeItem,
   className = '',
   spring = { mass: 0.1, stiffness: 150, damping: 20 },
   magnification = 70,
@@ -182,21 +188,25 @@ export default function Dock({
         role="toolbar"
         aria-label="Application dock"
       >
-        {items.map((item, index) => (
-          <DockItem
-            key={index}
-            onClick={item.onClick}
-            className={item.className}
-            mouseX={mouseX}
-            spring={spring}
-            distance={distance}
-            magnification={magnification}
-            baseItemSize={baseItemSize}
-          >
-            <DockIcon>{item.icon}</DockIcon>
-            <DockLabel>{item.label}</DockLabel>
-          </DockItem>
-        ))}
+        {items.map((item, index) => {
+          const isActive = activeItem ? (item.path === activeItem) : false;
+          return (
+            <DockItem
+              key={index}
+              onClick={item.onClick}
+              className={item.className}
+              mouseX={mouseX}
+              spring={spring}
+              distance={distance}
+              magnification={magnification}
+              baseItemSize={baseItemSize}
+              isActive={isActive}
+            >
+              <DockIcon>{item.icon}</DockIcon>
+              <DockLabel>{item.label}</DockLabel>
+            </DockItem>
+          );
+        })}
       </motion.div>
     </motion.div>
   );

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { AppHeader } from '@shared/components';
 import { Dock } from '@shared/components';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, CreditCard, Users, BarChart3, Calendar, Download, Eye, EyeOff, Plus, Sparkles, Play } from 'lucide-react';
 import { useEventData } from '../hooks/useEventData';
 import { UpcomingEvents } from '../components/EventLifecycle/UpcomingEvents';
@@ -22,6 +22,7 @@ import { AddEventDialog } from '../components/EventActions/AddEventDialog';
 
 const EventsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
   const { exportContactsCSV } = useNetworkContactsStore();
   const { events } = useEventsStore();
@@ -164,22 +165,26 @@ const EventsPage = () => {
     {
       icon: <Home className="h-6 w-6" />,
       label: 'Profile',
+      path: '/',
       onClick: () => navigate('/')
     },
     {
       icon: <Users className="h-6 w-6" />,
       label: 'Contacts',
+      path: '/contacts',
       onClick: () => navigate('/contacts')
     },
     {
       icon: <Calendar className="h-6 w-6" />,
       label: 'Events',
+      path: '/events',
       onClick: () => navigate('/events'),
       className: 'bg-accent/30'
     },
     {
       icon: <BarChart3 className="h-6 w-6" />,
       label: 'Analytics',
+      path: '/analytics',
       onClick: () => navigate('/analytics')
     }
   ];
@@ -388,7 +393,7 @@ const EventsPage = () => {
         ) : (
           <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none z-50">
             <div className="pointer-events-auto">
-              <Dock items={dockItems} />
+              <Dock items={dockItems} activeItem={location.pathname} />
             </div>
           </div>
         )
