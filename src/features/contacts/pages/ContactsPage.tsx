@@ -9,13 +9,17 @@ import { ExportMenu } from "../components/ContactActions/ExportMenu";
 import { ContactsPriorityQueue } from "../components/ContactDashboard/ContactsPriorityQueue";
 import { ContactsInsights } from "../components/ContactDashboard/ContactsInsights";
 import { ContactsByEvent } from "../components/ContactDashboard/ContactsByEvent";
+import { EmptyState } from '@shared/components';
 import { Button } from "@shared/ui/button";
 import { Checkbox } from "@shared/ui/checkbox";
 import { Badge } from "@shared/ui/badge";
 import { Users, QrCode, UserPlus, Download, Sparkles, BarChart3, LayoutGrid, Calendar, EyeOff, Eye } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useRef } from "react";
 import { Dock } from '@shared/components';
+import { MobileTabBar } from '@shared/components';
+import { useIsMobile, useSwipe } from '@shared/hooks';
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -30,6 +34,8 @@ import {
 
 const ContactsPage = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const mainContentRef = useRef<HTMLDivElement>(null);
   const {
     contacts,
     deleteContact,
@@ -62,6 +68,20 @@ const ContactsPage = () => {
     const now = new Date();
     return Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   };
+
+  // Mobile swipe navigation
+  useSwipe(mainContentRef, {
+    onSwipeLeft: () => {
+      if (isMobile) {
+        navigate('/events');
+      }
+    },
+    onSwipeRight: () => {
+      if (isMobile) {
+        navigate('/');
+      }
+    }
+  });
 
   // Calculate priority contacts (needs attention)
   const priorityContacts = useMemo(() => {
@@ -204,13 +224,8 @@ const ContactsPage = () => {
   const dockItems = [
     {
       icon: <QrCode size={20} />,
-      label: "QR Showcase",
+      label: "Profile",
       onClick: () => navigate("/"),
-    },
-    {
-      icon: <LayoutGrid size={20} />,
-      label: "Card Builder",
-      onClick: () => navigate("/cards"),
     },
     {
       icon: <Users size={20} />,
@@ -234,7 +249,7 @@ const ContactsPage = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <AppHeader />
 
-      <div className="flex-1 container mx-auto px-4 py-6 pb-24 space-y-8">
+      <div ref={mainContentRef} className="flex-1 container mx-auto px-4 py-6 pb-24 space-y-8">
         {/* Header Section */}
         <div className="flex items-center justify-between">
           <div>
@@ -396,44 +411,36 @@ const ContactsPage = () => {
 
           {/* Contacts Grid */}
           {filteredContacts.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center justify-center py-20 text-center"
-            >
-              <div className="w-20 h-20 bg-gradient-to-br from-muted to-muted/50 rounded-full flex items-center justify-center mb-6">
-                <Users className="h-12 w-12 text-muted-foreground" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground mb-3">
-                {searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
-                  ? "No contacts found"
-                  : "Your network is empty"}
-              </h3>
-              <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
-                {searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
-                  ? "Try adjusting your search or filters to find what you're looking for."
-                  : "Start building meaningful connections! Your networking journey begins with the first QR scan."}
-              </p>
-              <div className="flex gap-3">
-                {!searchQuery && selectedEvent === "all" && selectedIndustry === "all" && (
-                  <Button onClick={() => navigate("/")} className="gap-2">
-                    <QrCode className="h-4 w-4" />
-                    Go to QR Showcase
+            <EmptyState
+              icon={<Users className="h-8 w-8 text-muted-foreground" />}
+              title={searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
+                ? "No contacts found"
+                : "Your network is empty"}
+              description={searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
+                ? "Try adjusting your search or filters to find what you're looking for."
+                : "Start building meaningful connections! Your networking journey begins with the first QR scan."}
+              action={
+                <>
+                  {!searchQuery && selectedEvent === "all" && selectedIndustry === "all" && (
+                    <Button onClick={() => navigate("/")} className="gap-2">
+                      <QrCode className="h-4 w-4" />
+                      Go to Profile
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setEditingContact(null);
+                      setShowTagModal(true);
+                    }}
+                    className="gap-2"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Add Contact
                   </Button>
-                )}
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setEditingContact(null);
-                    setShowTagModal(true);
-                  }}
-                  className="gap-2"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  Add First Contact
-                </Button>
-              </div>
-            </motion.div>
+                </>
+              }
+            />
           ) : (
             <motion.div
               initial={{ opacity: 0 }}
@@ -468,23 +475,27 @@ const ContactsPage = () => {
         </motion.section>
       </div>
 
-      {/* Dock Navigation */}
+      {/* Adaptive Navigation */}
       {dockVisible && (
-        <motion.div
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
-        >
-          <div className="pointer-events-auto">
-            <Dock
-              items={dockItems}
-              panelHeight={68}
-              baseItemSize={50}
-              magnification={70}
-            />
-          </div>
-        </motion.div>
+        isMobile ? (
+          <MobileTabBar items={dockItems} />
+        ) : (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
+          >
+            <div className="pointer-events-auto">
+              <Dock
+                items={dockItems}
+                panelHeight={68}
+                baseItemSize={50}
+                magnification={70}
+              />
+            </div>
+          </motion.div>
+        )
       )}
 
       {/* Dock Visibility Toggle */}

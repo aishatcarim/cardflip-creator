@@ -5,11 +5,9 @@ import { Eye, LayoutGrid, QrCode, Users, BarChart3, Calendar, EyeOff } from "luc
 import { motion } from "framer-motion";
 import { useSavedCardsStore } from "../store/savedCardsStore";
 import { ViewCardModal } from "../components/SavedCards/ViewCardModal";
-import { Dock } from "@shared/components";
 import { useNavigate } from "react-router-dom";
 import { QRMenuPopover } from "../components/QRShowcase/QRMenuPopover";
 import { CardSelectorSheet } from "../components/QRShowcase/CardSelectorSheet";
-import { AppHeader } from "@shared/components";
 
 const QRShowcasePage = () => {
   const { savedCards } = useSavedCardsStore();
@@ -17,7 +15,6 @@ const QRShowcasePage = () => {
   const [selectedCardId, setSelectedCardId] = useState<string>("");
   const [coloredQR, setColoredQR] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
-  const [dockVisible, setDockVisible] = useState(true);
 
   // Get visible cards (not hidden)
   const visibleCards = savedCards.filter(card => !card.hidden);
@@ -34,37 +31,9 @@ const QRShowcasePage = () => {
     ? `${window.location.origin}/profile/${selectedCard.id}`
     : "";
 
-  const dockItems = [
-    { 
-      icon: <QrCode size={20} />, 
-      label: 'QR Showcase', 
-      onClick: () => navigate('/'),
-      className: 'bg-accent/30'
-    },
-    { 
-      icon: <LayoutGrid size={20} />, 
-      label: 'Card Builder', 
-      onClick: () => navigate('/cards')
-    },
-    { 
-      icon: <Users size={20} />, 
-      label: 'Contacts', 
-      onClick: () => navigate('/contacts')
-    },
-    { 
-      icon: <Calendar size={20} />, 
-      label: 'Events', 
-      onClick: () => navigate('/events')
-    },
-    { 
-      icon: <BarChart3 size={20} />, 
-      label: 'Analytics', 
-      onClick: () => navigate('/analytics')
-    },
-  ];
 
   return (
-    <div className="h-screen flex flex-col relative overflow-hidden">
+    <div className="h-full flex flex-col relative overflow-hidden">
       {/* Animated Background Gradient */}
       <motion.div
         className="absolute inset-0 -z-10"
@@ -78,8 +47,6 @@ const QRShowcasePage = () => {
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* Header */}
-      <AppHeader />
 
       {/* Floating Controls */}
       <div className="absolute top-20 right-4 z-40 flex items-center gap-2">
@@ -243,47 +210,8 @@ const QRShowcasePage = () => {
         />
       )}
 
-      {/* Dock Navigation */}
-      {dockVisible && (
-        <motion.div
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
-        >
-          <div className="pointer-events-auto">
-            <Dock 
-              items={dockItems}
-              panelHeight={68}
-              baseItemSize={50}
-              magnification={70}
-            />
-          </div>
-        </motion.div>
-      )}
-
-      {/* Dock Visibility Toggle */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.3 }}
-        className="fixed bottom-4 right-4 z-50"
-      >
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setDockVisible(!dockVisible)}
-          className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background"
-        >
-          {dockVisible ? (
-            <EyeOff className="h-4 w-4" />
-          ) : (
-            <Eye className="h-4 w-4" />
-          )}
-        </Button>
-      </motion.div>
     </div>
   );
 };
 
-export default QRShowcasePage;
+export { QRShowcasePage };

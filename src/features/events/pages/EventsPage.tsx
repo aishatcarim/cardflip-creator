@@ -8,8 +8,11 @@ import { UpcomingEvents } from '../components/EventLifecycle/UpcomingEvents';
 import { ActiveEventBanner } from '../components/EventLifecycle/ActiveEventBanner';
 import { RecentEvents } from '../components/EventLifecycle/RecentEvents';
 import { EventInsights } from '../components/EventLifecycle/EventInsights';
+import { EmptyState } from '@shared/components';
 import { Button } from '@shared/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
+import { MobileTabBar } from '@shared/components';
+import { useIsMobile } from '@shared/hooks';
 import { useNetworkContactsStore } from '@contacts/store/networkContactsStore';
 import { useEventsStore } from '../store/eventsStore';
 import { toast } from 'sonner';
@@ -19,6 +22,7 @@ import { AddEventDialog } from '../components/EventActions/AddEventDialog';
 
 const EventsPage = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { exportContactsCSV } = useNetworkContactsStore();
   const { events } = useEventsStore();
   const [activeTab, setActiveTab] = useState('upcoming');
@@ -159,13 +163,8 @@ const EventsPage = () => {
   const dockItems = [
     {
       icon: <Home className="h-6 w-6" />,
-      label: 'Home',
+      label: 'Profile',
       onClick: () => navigate('/')
-    },
-    {
-      icon: <CreditCard className="h-6 w-6" />,
-      label: 'Cards',
-      onClick: () => navigate('/cards')
     },
     {
       icon: <Users className="h-6 w-6" />,
@@ -269,19 +268,17 @@ const EventsPage = () => {
                   onActivateEvent={handleActivateEvent}
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center mb-6">
-                    📅
-                  </div>
-                  <h3 className="text-xl font-bold text-foreground mb-3">No Upcoming Events</h3>
-                  <p className="text-muted-foreground max-w-md mb-8">
-                    Plan your next networking event to start building connections and tracking your progress.
-                  </p>
-                  <Button onClick={() => setAddEventOpen(true)} size="lg" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Plan Your First Event
-                  </Button>
-                </div>
+                <EmptyState
+                  icon="📅"
+                  title="No Upcoming Events"
+                  description="Plan your next networking event to start building connections and tracking your progress."
+                  action={
+                    <Button onClick={() => setAddEventOpen(true)} size="lg" className="gap-2">
+                      <Plus className="h-4 w-4" />
+                      Plan Your First Event
+                    </Button>
+                  }
+                />
               )}
             </TabsContent>
 
@@ -327,31 +324,34 @@ const EventsPage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6">
-                    ⏸️
-                  </div>
-                  <h3 className="text-xl font-bold text-foreground mb-3">No Active Events</h3>
-                  <p className="text-muted-foreground max-w-md mb-8">
-                    Activate Event Mode when you arrive at your next networking event to track progress and get quick actions.
-                  </p>
-                  {mockUpcomingEvents.length > 0 && (
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium">Ready to activate:</p>
-                      {mockUpcomingEvents.slice(0, 2).map(event => (
-                        <Button
-                          key={event.id}
-                          variant="outline"
-                          onClick={() => handleActivateEvent(event.id)}
-                          className="gap-2"
-                        >
-                          <Play className="h-4 w-4" />
-                          Activate {event.name}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <EmptyState
+                  icon="⏸️"
+                  title="No Active Events"
+                  description="Activate Event Mode when you arrive at your next networking event to track progress and get quick actions."
+                  action={
+                    mockUpcomingEvents.length > 0 ? (
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium">Ready to activate:</p>
+                        {mockUpcomingEvents.slice(0, 2).map(event => (
+                          <Button
+                            key={event.id}
+                            variant="outline"
+                            onClick={() => handleActivateEvent(event.id)}
+                            className="gap-2"
+                          >
+                            <Play className="h-4 w-4" />
+                            Activate {event.name}
+                          </Button>
+                        ))}
+                      </div>
+                    ) : (
+                      <Button onClick={() => setAddEventOpen(true)} variant="outline" className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Plan Event
+                      </Button>
+                    )
+                  }
+                />
               )}
             </TabsContent>
 
@@ -362,18 +362,16 @@ const EventsPage = () => {
                   onSendFollowUps={handleSendFollowUps}
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mb-6">
-                    📊
-                  </div>
-                  <h3 className="text-xl font-bold text-foreground mb-3">No Recent Events</h3>
-                  <p className="text-muted-foreground max-w-md mb-8">
-                    Your completed events and follow-up analytics will appear here.
-                  </p>
-                  <Button onClick={() => setActiveTab('upcoming')} variant="outline">
-                    Plan Your Next Event
-                  </Button>
-                </div>
+                <EmptyState
+                  icon="📊"
+                  title="No Recent Events"
+                  description="Your completed events and follow-up analytics will appear here."
+                  action={
+                    <Button onClick={() => setActiveTab('upcoming')} variant="outline">
+                      Plan Your Next Event
+                    </Button>
+                  }
+                />
               )}
             </TabsContent>
           </Tabs>
@@ -383,13 +381,17 @@ const EventsPage = () => {
       {/* Add Event Dialog */}
       <AddEventDialog open={addEventOpen} onOpenChange={setAddEventOpen} />
 
-      {/* Dock Navigation */}
+      {/* Adaptive Navigation */}
       {dockVisible && (
-        <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none z-50">
-          <div className="pointer-events-auto">
-            <Dock items={dockItems} />
+        isMobile ? (
+          <MobileTabBar items={dockItems} />
+        ) : (
+          <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none z-50">
+            <div className="pointer-events-auto">
+              <Dock items={dockItems} />
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {/* Dock Visibility Toggle */}

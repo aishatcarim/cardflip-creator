@@ -8,10 +8,8 @@ import { Button } from "@shared/ui/button";
 import { ChevronLeft, ChevronRight, Settings, LayoutGrid, QrCode, Users, BarChart3, Calendar, Eye, EyeOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Dock } from "@shared/components";
 import { SavedCardsList } from "../components/SavedCards/SavedCardsList";
 import { DefaultsSheet } from "../components/SavedCards/DefaultsSheet";
-import { AppHeader } from "@shared/components";
 import { useNavigate } from "react-router-dom";
 
 const CardsPage = () => {
@@ -22,46 +20,11 @@ const CardsPage = () => {
   const [showHidden, setShowHidden] = useState(false);
   const [showDefaults, setShowDefaults] = useState(false);
   const [currentTab, setCurrentTab] = useState("builder");
-  const [dockVisible, setDockVisible] = useState(true);
   const navigate = useNavigate();
 
-  const dockItems = [
-    { 
-      icon: <QrCode size={20} />, 
-      label: 'QR Showcase', 
-      onClick: () => navigate('/')
-    },
-    { 
-      icon: <LayoutGrid size={20} />, 
-      label: 'Card Builder', 
-      onClick: () => navigate('/cards'),
-      className: 'bg-accent/30'
-    },
-    { 
-      icon: <Users size={20} />, 
-      label: 'Contacts', 
-      onClick: () => navigate('/contacts')
-    },
-    { 
-      icon: <Calendar size={20} />, 
-      label: 'Events', 
-      onClick: () => navigate('/events')
-    },
-    { 
-      icon: <BarChart3 size={20} />, 
-      label: 'Analytics', 
-      onClick: () => navigate('/analytics')
-    },
-  ];
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      {/* Header with centered tabs */}
-      <AppHeader 
-        showCardsTabs 
-        currentTab={currentTab}
-        onTabChange={setCurrentTab}
-      />
+    <div className="h-full flex flex-col bg-background">
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -226,47 +189,8 @@ const CardsPage = () => {
       {/* Defaults Sheet */}
       <DefaultsSheet open={showDefaults} onOpenChange={setShowDefaults} />
 
-      {/* Dock Navigation */}
-      {dockVisible && (
-        <motion.div
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
-        >
-          <div className="pointer-events-auto">
-            <Dock 
-              items={dockItems}
-              panelHeight={68}
-              baseItemSize={50}
-              magnification={70}
-            />
-          </div>
-        </motion.div>
-      )}
-
-      {/* Dock Visibility Toggle */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.3 }}
-        className="fixed bottom-4 right-4 z-50"
-      >
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setDockVisible(!dockVisible)}
-          className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background"
-        >
-          {dockVisible ? (
-            <EyeOff className="h-4 w-4" />
-          ) : (
-            <Eye className="h-4 w-4" />
-          )}
-        </Button>
-      </motion.div>
     </div>
   );
 };
 
-export default CardsPage;
+export { CardsPage };

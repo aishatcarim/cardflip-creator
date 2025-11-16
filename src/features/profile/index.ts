@@ -2,9 +2,10 @@
 // ────────────────────────────────────────────────────────────
 
 // Pages
-export { default as QRShowcasePage } from './pages/QRShowcasePage';
-export { default as CardsPage } from './pages/CardsPage';
-export { default as ProfileViewerPage } from './pages/ProfileViewerPage';
+export { default as ProfilePage } from './pages/ProfilePage';
+export { QRShowcasePage } from './pages/QRShowcasePage';
+export { CardsPage } from './pages/CardsPage';
+export { ProfileViewerPage } from './pages/ProfileViewerPage';
 
 // Hooks
 export { useCardStore } from './store/cardStore';
