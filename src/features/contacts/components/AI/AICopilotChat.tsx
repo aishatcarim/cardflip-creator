@@ -122,24 +122,23 @@ export const AICopilotChat = ({ contact }: AICopilotChatProps) => {
   ];
 
   return (
-    <Card className="flex flex-col h-full bg-card">
-      {/* Chat Header */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-white" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground">AI Networking Copilot</h3>
-            <p className="text-xs text-muted-foreground">
-              Helping you connect with {contact.contactName}
-            </p>
-          </div>
+    <Card className="flex flex-col h-full rounded-[28px] border border-border bg-gradient-to-b from-white to-muted/80 shadow-soft">
+      <div className="flex items-center gap-3 border-b border-border/60 bg-white/80 px-5 py-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#CCE6FF] to-[#E4D7FF] text-foreground shadow-inner">
+          <Sparkles className="h-6 w-6 text-white" />
         </div>
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">AI Networking Copilot</h3>
+          <p className="text-xs text-muted-foreground">
+            Personalized prompts for {contact.contactName}
+          </p>
+        </div>
+        <span className="ml-auto rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.4em] text-muted-foreground">
+          Beta
+        </span>
       </div>
 
-      {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 px-5 py-4">
         <div className="space-y-4">
           {messages.map((msg) => (
             <div
@@ -147,7 +146,7 @@ export const AICopilotChat = ({ contact }: AICopilotChatProps) => {
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.role === 'user' ? (
-                <div className="bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-[80%]">
+                <div className="max-w-[80%] rounded-2xl bg-accent text-accent-foreground px-5 py-3 text-sm shadow-sm">
                   {msg.content}
                 </div>
               ) : (
@@ -158,10 +157,10 @@ export const AICopilotChat = ({ contact }: AICopilotChatProps) => {
 
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-muted rounded-lg px-4 py-2">
+              <div className="rounded-2xl border border-border bg-white/80 px-4 py-2 text-sm text-muted-foreground shadow-sm">
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm">Thinking...</span>
+                  <span>Thinking...</span>
                 </div>
               </div>
             </div>
@@ -171,37 +170,33 @@ export const AICopilotChat = ({ contact }: AICopilotChatProps) => {
         </div>
       </ScrollArea>
 
-      {/* Quick Prompts (show when no messages from user) */}
-      {messages.filter(m => m.role === 'user').length === 0 && (
-        <div className="px-4 pb-4">
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Quick start:</p>
-            <div className="grid grid-cols-1 gap-2">
-              {quickPrompts.map((prompt, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setInput(prompt)}
-                  className="justify-start text-left h-auto py-2 px-3"
-                >
-                  {prompt}
-                </Button>
-              ))}
-            </div>
+      {messages.filter((m) => m.role === "user").length === 0 && (
+        <div className="px-5 pb-4">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Quick start</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {quickPrompts.map((prompt, index) => (
+              <Button
+                key={index}
+                variant="ghost"
+                size="sm"
+                onClick={() => setInput(prompt)}
+                className="rounded-2xl border border-border/60 px-4 py-2 text-sm text-foreground"
+              >
+                {prompt}
+              </Button>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Input Area */}
-      <div className="border-t border-border p-4">
-        <div className="flex gap-2">
+      <div className="border-t border-border/60 px-5 py-4">
+        <div className="flex items-end gap-3">
           <Textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask AI to help with follow-up messages..."
-            className="resize-none min-h-[44px] max-h-32"
+            className="grow resize-none rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-accent"
             rows={1}
             onKeyDown={handleKeyPress}
           />
@@ -209,13 +204,13 @@ export const AICopilotChat = ({ contact }: AICopilotChatProps) => {
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
             size="icon"
-            className="shrink-0"
+            className="rounded-2xl bg-accent text-accent-foreground shadow-lg"
           >
             <Send className="h-4 w-4" />
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Press Enter to send, Shift+Enter for new line
+        <p className="text-[11px] text-muted-foreground mt-2">
+          Press Enter to send, Shift+Enter for a new line
         </p>
       </div>
     </Card>

@@ -13,14 +13,17 @@ import { EmptyState } from '@shared/components';
 import { Button } from "@shared/ui/button";
 import { Checkbox } from "@shared/ui/checkbox";
 import { Badge } from "@shared/ui/badge";
-import { Users, QrCode, UserPlus, Download, Sparkles, BarChart3, LayoutGrid, Calendar, EyeOff, Eye } from "lucide-react";
-import { motion } from "framer-motion";
+import { ScrollArea } from "@shared/ui/scroll-area";
+import { Users, QrCode, UserPlus, Download, Sparkles, BarChart3, LayoutGrid, Calendar, EyeOff, Eye, Filter, Inbox, Archive, Send, TrendingUp, Clock, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useRef } from "react";
 import { Dock } from '@shared/components';
 import { MobileTabBar } from '@shared/components';
 import { useIsMobile, useSwipe } from '@shared/hooks';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@shared/ui/dialog";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@shared/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +34,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@shared/ui/alert-dialog";
+
+type ContactsSectionTab = "dashboard" | "directory";
 
 const ContactsPage = () => {
   const navigate = useNavigate();
@@ -55,6 +60,8 @@ const ContactsPage = () => {
   const [showTagModal, setShowTagModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [dockVisible, setDockVisible] = useState(true);
+  const [activeSection, setActiveSection] = useState<ContactsSectionTab>("dashboard");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Helper functions for priority calculation
   const getDaysSince = (dateString: string) => {
@@ -124,6 +131,43 @@ const ContactsPage = () => {
     [contacts]
   );
 
+  const isDateToday = (dateString?: string) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    const now = new Date();
+    return (
+      date.getFullYear() === now.getFullYear() &&
+      date.getMonth() === now.getMonth() &&
+      date.getDate() === now.getDate()
+    );
+  };
+
+  const formatDueDateLabel = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+
+  const followUpsDueToday = useMemo(
+    () => contacts.filter((contact) => isDateToday(contact.followUpDueDate)).length,
+    [contacts]
+  );
+
+  const highlightText =
+    followUpsDueToday > 0
+      ? `You have ${followUpsDueToday} follow-up${followUpsDueToday !== 1 ? "s" : ""} due today.`
+      : undefined;
+
+  const newContactsThisWeek = useMemo(
+    () => contacts.filter((contact) => getDaysSince(contact.taggedAt) <= 7).length,
+    [contacts]
+  );
+
+  const overdueCount = useMemo(
+    () => contacts.filter((c) => c.followUpDueDate && new Date(c.followUpDueDate) < new Date()).length,
+    [contacts]
+  );
+
   // Filter and sort contacts
   const filteredContacts = useMemo(() => {
     let filtered = contacts;
@@ -173,6 +217,15 @@ const ContactsPage = () => {
 
     return filtered;
   }, [contacts, searchQuery, selectedEvent, selectedIndustry, sortBy]);
+
+  const quickEventFilters = events.slice(0, 4);
+  const quickIndustryFilters = industries.slice(0, 3);
+
+  const toggleEventFilter = (value: string) =>
+    setSelectedEvent((prev) => (prev === value ? "all" : value));
+
+  const toggleIndustryFilter = (value: string) =>
+    setSelectedIndustry((prev) => (prev === value ? "all" : value));
 
   const handleSelectContact = (id: string) => {
     setSelectedContacts((prev) =>
@@ -252,233 +305,431 @@ const ContactsPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <AppHeader />
+      <AppHeader highlightText={highlightText} />
 
-      <div ref={mainContentRef} className="flex-1 container mx-auto px-4 py-6 pb-24 space-y-8">
-        {/* Header Section */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">My Network</h1>
-            <p className="text-muted-foreground mt-1">
-              {contacts.length} total connections
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
+      <div ref={mainContentRef} className="flex-1 container mx-auto px-4 py-6 pb-24 max-w-7xl">
+        {/* Main Tabs */}
+        <Tabs
+          value={activeSection}
+          onValueChange={(value) => setActiveSection(value as ContactsSectionTab)}
+          className="space-y-6"
+        >
+          <div className="flex items-center justify-between">
+            <TabsList className="bg-muted/50 p-1 rounded-full">
+              <TabsTrigger
+                value="dashboard"
+                className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Dashboard
+                {priorityContacts.length > 0 && (
+                  <Badge variant="secondary" className="ml-2 rounded-full h-5 min-w-5 px-1.5">
+                    {priorityContacts.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="directory"
+                className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <LayoutGrid className="h-4 w-4 mr-2" />
+                Directory
+                <Badge variant="outline" className="ml-2 rounded-full h-5 min-w-5 px-1.5">
+                  {contacts.length}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+
             <Button
+              variant="default"
               onClick={() => {
                 setEditingContact(null);
                 setShowTagModal(true);
               }}
-              className="gap-2"
+              className="gap-2 rounded-full shadow-sm"
             >
               <UserPlus className="h-4 w-4" />
               Add Contact
             </Button>
-            <ExportMenu
-              onExportCSV={handleExportCSV}
-              onExportVCards={handleExportAllVCards}
-            />
           </div>
-        </div>
 
-        {/* Priority Queue - Needs Attention */}
-        {priorityContacts.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center">
-                  <Sparkles className="h-4 w-4 text-white" />
+          {/* Dashboard Tab */}
+          <TabsContent value="dashboard" className="space-y-6">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="rounded-2xl border border-border bg-card p-6"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Total Contacts</p>
+                    <p className="text-3xl font-bold">{contacts.length}</p>
+                  </div>
+                  <Users className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground">Needs Attention</h2>
-                  <p className="text-muted-foreground">
-                    {priorityContacts.length} contact{priorityContacts.length !== 1 ? 's' : ''} requiring immediate action
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="rounded-2xl border border-border bg-card p-6"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">New This Week</p>
+                    <p className="text-3xl font-bold">{newContactsThisWeek}</p>
+                  </div>
+                  <TrendingUp className="h-5 w-5 text-green-500" />
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="rounded-2xl border border-border bg-card p-6"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Due Today</p>
+                    <p className="text-3xl font-bold">{followUpsDueToday}</p>
+                  </div>
+                  <Clock className="h-5 w-5 text-blue-500" />
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                className="rounded-2xl border border-border bg-card p-6"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Overdue</p>
+                    <p className="text-3xl font-bold">{overdueCount}</p>
+                  </div>
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Main Dashboard Content */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Priority Follow-ups */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="rounded-2xl border border-border bg-card"
+              >
+                <div className="p-6 border-b border-border">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold">Priority Follow-ups</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Contacts needing your attention
+                      </p>
+                    </div>
+                    {priorityContacts.length > 0 && (
+                      <Badge variant="secondary" className="rounded-full">
+                        {priorityContacts.length}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <ScrollArea className="h-[400px]">
+                  <div className="p-6">
+                    {priorityContacts.length > 0 ? (
+                      <ContactsPriorityQueue contacts={priorityContacts.slice(0, 8)} />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <div className="rounded-full bg-muted p-4 mb-4">
+                          <Sparkles className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <p className="text-sm font-medium mb-1">All caught up!</p>
+                        <p className="text-sm text-muted-foreground">
+                          No urgent follow-ups at the moment
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </motion.div>
+
+              {/* Network Insights */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.35 }}
+                className="rounded-2xl border border-border bg-card"
+              >
+                <div className="p-6 border-b border-border">
+                  <h3 className="text-lg font-semibold">Network Insights</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Understand your networking patterns
                   </p>
                 </div>
-              </div>
-              <Button variant="outline" size="sm" className="gap-2">
-                View All
-                <Badge variant="secondary">{priorityContacts.length}</Badge>
-              </Button>
+                <div className="p-6">
+                  <ContactsInsights contacts={contacts} />
+                </div>
+              </motion.div>
             </div>
-            <ContactsPriorityQueue contacts={priorityContacts} />
-          </motion.section>
-        )}
 
-        {/* Insights Dashboard */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <ContactsInsights contacts={contacts} />
-        </motion.section>
-
-        {/* Event-Based Organization */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                📅
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">By Event</h2>
-                <p className="text-muted-foreground">Organize contacts by networking events</p>
-              </div>
-            </div>
-          </div>
-          <ContactsByEvent contacts={contacts} />
-        </motion.section>
-
-        {/* All Contacts Section */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center">
-                👥
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">All Contacts</h2>
-                <p className="text-muted-foreground">
-                  {filteredContacts.length} contact{filteredContacts.length !== 1 ? 's' : ''} in your network
-                  {selectedContacts.length > 0 && ` (${selectedContacts.length} selected)`}
+            {/* Contacts by Event */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="rounded-2xl border border-border bg-card"
+            >
+              <div className="p-6 border-b border-border">
+                <h3 className="text-lg font-semibold">Contacts by Event</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  See where you're building connections
                 </p>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <ContactSearchBar value={searchQuery} onChange={setSearchQuery} />
-              <ContactFilters
-                events={events}
-                industries={industries}
-                selectedEvent={selectedEvent}
-                selectedIndustry={selectedIndustry}
-                sortBy={sortBy}
-                onEventChange={setSelectedEvent}
-                onIndustryChange={setSelectedIndustry}
-                onSortChange={setSortBy}
-                onClearFilters={() => {
-                  setSelectedEvent("all");
-                  setSelectedIndustry("all");
-                  setSearchQuery("");
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Bulk Actions Toolbar */}
-          {selectedContacts.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-3 p-4 bg-gradient-to-r from-accent/10 to-accent/5 rounded-xl border border-accent/20 mb-6"
-            >
-              <Checkbox
-                checked={selectedContacts.length === filteredContacts.length}
-                onCheckedChange={handleSelectAll}
-                className="border-accent"
-              />
-              <span className="text-foreground font-medium">
-                {selectedContacts.length} contact{selectedContacts.length !== 1 ? 's' : ''} selected
-              </span>
-              <div className="ml-auto flex items-center gap-2">
-                <Button
-                  onClick={handleExportSelectedVCards}
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 hover:bg-accent/20"
-                >
-                  <Download className="h-4 w-4" />
-                  Export vCards
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setShowDeleteDialog(true)}
-                  className="gap-2"
-                >
-                  🗑️ Delete Selected
-                </Button>
+              <div className="p-6">
+                <ContactsByEvent contacts={contacts} />
               </div>
             </motion.div>
-          )}
+          </TabsContent>
 
-          {/* Contacts Grid */}
-          {filteredContacts.length === 0 ? (
-            <EmptyState
-              icon={<Users className="h-8 w-8 text-muted-foreground" />}
-              title={searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
-                ? "No contacts found"
-                : "Your network is empty"}
-              description={searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
-                ? "Try adjusting your search or filters to find what you're looking for."
-                : "Start building meaningful connections! Your networking journey begins with the first QR scan."}
-              action={
-                <>
-                  {!searchQuery && selectedEvent === "all" && selectedIndustry === "all" && (
-                    <Button onClick={() => navigate("/")} className="gap-2">
-                      <QrCode className="h-4 w-4" />
-                      Go to Profile
+          {/* Directory Tab */}
+          <TabsContent value="directory" className="space-y-6">
+            {/* Search and Filters */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl border border-border bg-card p-6 space-y-4"
+            >
+              <div className="flex flex-col lg:flex-row gap-4">
+                <div className="flex-1">
+                  <ContactSearchBar value={searchQuery} onChange={setSearchQuery} />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setFiltersOpen(true)}
+                    className="gap-2 rounded-full"
+                  >
+                    <Filter className="h-4 w-4" />
+                    Filters
+                  </Button>
+                  {(selectedEvent !== "all" || selectedIndustry !== "all" || searchQuery) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setSelectedEvent("all");
+                        setSelectedIndustry("all");
+                        setSearchQuery("");
+                      }}
+                      className="rounded-full"
+                    >
+                      Clear
                     </Button>
                   )}
                   <Button
+                    size="sm"
                     variant="outline"
-                    onClick={() => {
-                      setEditingContact(null);
-                      setShowTagModal(true);
-                    }}
-                    className="gap-2"
+                    onClick={handleExportCSV}
+                    className="gap-2 rounded-full"
                   >
-                    <UserPlus className="h-4 w-4" />
-                    Add Contact
+                    <Download className="h-4 w-4" />
+                    Export
                   </Button>
-                </>
-              }
-            />
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-            >
-              {filteredContacts.map((contact, index) => (
-                <div key={contact.id} className="relative">
-                  {selectedContacts.length > 0 && (
-                    <div className="absolute -top-2 -left-2 z-20">
-                      <div className="bg-background border-2 border-accent rounded-full p-1 shadow-lg">
-                        <Checkbox
-                          checked={selectedContacts.includes(contact.id)}
-                          onCheckedChange={() => handleSelectContact(contact.id)}
-                          className="border-accent data-[state=checked]:bg-accent"
-                        />
-                      </div>
-                    </div>
-                  )}
-                  <ContactCard
-                    contact={contact}
-                    index={index}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onExport={exportContactVCard}
-                  />
                 </div>
-              ))}
+              </div>
+
+              {/* Quick Filters */}
+              {(quickEventFilters.length > 0 || quickIndustryFilters.length > 0) && (
+                <div className="flex flex-wrap gap-2">
+                  {quickEventFilters.map((event) => (
+                    <Button
+                      key={`event-${event}`}
+                      size="sm"
+                      variant={selectedEvent === event ? "secondary" : "outline"}
+                      onClick={() => toggleEventFilter(event)}
+                      className="rounded-full text-xs"
+                    >
+                      {event}
+                    </Button>
+                  ))}
+                  {quickIndustryFilters.map((industry) => (
+                    <Button
+                      key={`industry-${industry}`}
+                      size="sm"
+                      variant={selectedIndustry === industry ? "secondary" : "outline"}
+                      onClick={() => toggleIndustryFilter(industry)}
+                      className="rounded-full text-xs"
+                    >
+                      {industry}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </motion.div>
-          )}
-        </motion.section>
+
+            {/* Bulk Actions Bar */}
+            <AnimatePresence>
+              {selectedContacts.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="rounded-2xl border border-accent bg-accent/10 p-4"
+                >
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={selectedContacts.length === filteredContacts.length}
+                        onCheckedChange={handleSelectAll}
+                        className="border-accent"
+                      />
+                      <span className="text-sm font-medium">
+                        {selectedContacts.length} selected
+                      </span>
+                    </div>
+                    <div className="ml-auto flex gap-2">
+                      <Button
+                        onClick={handleExportSelectedVCards}
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 rounded-full"
+                      >
+                        <Download className="h-4 w-4" />
+                        Export
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setShowDeleteDialog(true)}
+                        className="gap-2 rounded-full"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Contacts Grid */}
+            {filteredContacts.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <EmptyState
+                  icon={<Users className="h-12 w-12 text-muted-foreground" />}
+                  title={
+                    searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
+                      ? "No contacts found"
+                      : "Your network is empty"
+                  }
+                  description={
+                    searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
+                      ? "Try adjusting your search or filters."
+                      : "Start building meaningful connections today."
+                  }
+                  action={
+                    <div className="flex gap-2">
+                      {!searchQuery && selectedEvent === "all" && selectedIndustry === "all" && (
+                        <Button onClick={() => navigate("/")} className="gap-2 rounded-full">
+                          <QrCode className="h-4 w-4" />
+                          Go to Profile
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setEditingContact(null);
+                          setShowTagModal(true);
+                        }}
+                        className="gap-2 rounded-full"
+                      >
+                        <UserPlus className="h-4 w-4" />
+                        Add Contact
+                      </Button>
+                    </div>
+                  }
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+              >
+                {filteredContacts.map((contact, index) => (
+                  <motion.div
+                    key={contact.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="relative"
+                  >
+                    {selectedContacts.length > 0 && (
+                      <div className="absolute -top-2 -left-2 z-20">
+                        <div className="bg-background border-2 border-accent rounded-full p-1 shadow-lg">
+                          <Checkbox
+                            checked={selectedContacts.includes(contact.id)}
+                            onCheckedChange={() => handleSelectContact(contact.id)}
+                            className="border-accent data-[state=checked]:bg-accent"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <ContactCard
+                      contact={contact}
+                      index={index}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onExport={exportContactVCard}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {/* Filters Dialog */}
+      <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Filter Contacts</DialogTitle>
+            <DialogDescription>Refine your contact list</DialogDescription>
+          </DialogHeader>
+          <ContactFilters
+            events={events}
+            industries={industries}
+            selectedEvent={selectedEvent}
+            selectedIndustry={selectedIndustry}
+            sortBy={sortBy}
+            onEventChange={setSelectedEvent}
+            onIndustryChange={setSelectedIndustry}
+            onSortChange={setSortBy}
+            onClearFilters={() => {
+              setSelectedEvent("all");
+              setSelectedIndustry("all");
+              setSearchQuery("");
+            }}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFiltersOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Adaptive Navigation */}
       {dockVisible && (

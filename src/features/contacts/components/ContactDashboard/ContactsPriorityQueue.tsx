@@ -69,7 +69,7 @@ export const ContactsPriorityQueue = ({ contacts }: ContactsPriorityQueueProps) 
   const displayContacts = contacts.slice(0, 4);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className=" grid grid-cols-1 md:grid-cols-2 gap-4">
       {displayContacts.map((contact) => {
         const urgency = getUrgencyIndicator(contact);
         const daysSince = getDaysSince(contact.taggedAt);
@@ -77,7 +77,7 @@ export const ContactsPriorityQueue = ({ contacts }: ContactsPriorityQueueProps) 
         return (
           <Card
             key={contact.id}
-            className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
+          className="p-4 min-h-[220px] hover:shadow-lg transition-shadow cursor-pointer"
             onClick={() => handleCardClick(contact.id)}
           >
             <div className="space-y-3">

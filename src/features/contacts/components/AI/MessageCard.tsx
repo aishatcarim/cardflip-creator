@@ -55,11 +55,9 @@ export const MessageCard = ({ content, suggestions }: MessageCardProps) => {
   };
 
   return (
-    <div className="bg-muted rounded-lg p-4 max-w-[90%] space-y-4">
-      {/* AI Response Text */}
+    <div className="rounded-2xl border border-border/60 bg-white/80 p-5 shadow-sm max-w-[80%] space-y-5">
       <p className="text-sm text-foreground">{content}</p>
 
-      {/* Message Suggestions */}
       {suggestions && suggestions.length > 0 && (
         <div className="space-y-3">
           {suggestions.map((suggestion, idx) => {
@@ -67,10 +65,12 @@ export const MessageCard = ({ content, suggestions }: MessageCardProps) => {
             const isCopied = copiedId === suggestionId;
 
             return (
-              <Card key={idx} className="p-4 border">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <Badge className={`gap-1 ${getToneColor(suggestion.tone)}`}>
+              <div
+                key={idx}
+                className="rounded-2xl border border-border/60 bg-[#F5F7FF] p-4 shadow-inner"
+              >
+                <div className="flex items-center justify-between mb-3 gap-2">
+                  <Badge variant="outline" className={`gap-1 ${getToneColor(suggestion.tone)}`}>
                     {getToneIcon(suggestion.tone)}
                     {suggestion.tone.replace('_', ' ').toUpperCase()}
                   </Badge>
@@ -98,7 +98,6 @@ export const MessageCard = ({ content, suggestions }: MessageCardProps) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        // TODO: Open refine modal
                         console.log('Refine message:', suggestion);
                       }}
                     >
@@ -107,22 +106,19 @@ export const MessageCard = ({ content, suggestions }: MessageCardProps) => {
                   </div>
                 </div>
 
-                {/* Message Content */}
-                <div className="text-sm text-foreground whitespace-pre-wrap font-mono bg-muted/50 p-3 rounded border">
+                <div className="text-sm text-foreground whitespace-pre-wrap rounded-xl border border-border/40 bg-white/90 p-3 font-mono">
                   {suggestion.message}
                 </div>
 
-                {/* Platform Recommendation */}
-                <div className="mt-2 text-xs text-muted-foreground">
-                  Best for: <span className="font-medium">{suggestion.platform}</span>
-                </div>
-              </Card>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Best for: <span className="font-medium text-foreground">{suggestion.platform}</span>
+                </p>
+              </div>
             );
           })}
         </div>
       )}
 
-      {/* Context Information */}
       <div className="text-xs text-muted-foreground border-t border-border/50 pt-2">
         💡 <em>Messages are personalized based on your meeting context and relationship history</em>
       </div>

@@ -2,7 +2,7 @@
 // ────────────────────────────────────────────────────────────
 
 // Pages
-export { default as ProfilePage } from './pages/ProfilePage';
+export { ProfilePage } from './pages/ProfilePage';
 export { QRShowcasePage } from './pages/QRShowcasePage';
 export { CardsPage } from './pages/CardsPage';
 export { ProfileViewerPage } from './pages/ProfileViewerPage';

@@ -42,11 +42,16 @@ const ProfilePage = () => {
     },
   ];
 
+  const profileNavTabs = [
+    { value: "present", label: "Present Mode" },
+    { value: "edit", label: "Edit Cards" },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <AppHeader
-        showCardsTabs={true}
-        currentTab={activeTab}
+        tabs={profileNavTabs}
+        activeTab={activeTab}
         onTabChange={setActiveTab}
       />
 
@@ -95,4 +100,4 @@ const ProfilePage = () => {
   );
 };
 
-export default ProfilePage;
+export { ProfilePage };

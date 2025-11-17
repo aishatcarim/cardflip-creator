@@ -214,4 +214,5 @@ const QRShowcasePage = () => {
   );
 };
 
+export { QRShowcasePage as default };
 export { QRShowcasePage };

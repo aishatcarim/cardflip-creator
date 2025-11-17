@@ -291,4 +291,5 @@ const ProfileViewerPage = () => {
   );
 };
 
+export { ProfileViewerPage as default };
 export { ProfileViewerPage };
