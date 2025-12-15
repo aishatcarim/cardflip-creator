@@ -13,7 +13,6 @@ import {
   EyeOff,
   TrendingUp,
   Target,
-  Award,
   Zap,
   ArrowUpRight,
   ArrowDownRight
@@ -21,7 +20,6 @@ import {
 import { motion } from 'framer-motion';
 import { useAnalyticsData } from '../hooks/useAnalyticsData';
 import { useEventData } from '@events/hooks/useEventData';
-import { StatsCard } from '../components/StatsCard';
 import { ContactsGrowthChart } from '../components/ContactsGrowthChart';
 import { EventDistributionChart } from '../components/EventDistributionChart';
 import { IndustryBreakdownChart } from '../components/IndustryBreakdownChart';
@@ -31,7 +29,6 @@ import { EventTimeline } from '@events/components/EventDetail/EventTimeline';
 import { Button } from '@shared/ui/button';
 import { Badge } from '@shared/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
-import { Card } from '@shared/ui/card';
 import { useNetworkContactsStore } from '@contacts/store/networkContactsStore';
 import { useIsMobile } from '@shared/hooks';
 import { toast } from 'sonner';
@@ -61,15 +58,14 @@ const AnalyticsPage = () => {
 
   const eventData = useEventData();
 
-  // Calculate trend percentages (mock data - would come from real comparison)
-  const contactsTrend = 12.5; // +12.5% vs last month
+  const contactsTrend = 12.5;
   const eventsTrend = 8.3;
   const industriesTrend = -2.1;
   const monthlyTrend = 15.7;
 
   const handleExportReport = () => {
     exportContactsCSV();
-    toast.success('Analytics report exported successfully!');
+    toast.success('Report exported');
   };
 
   const handleViewTimeline = (event: EventData) => {
@@ -78,102 +74,37 @@ const AnalyticsPage = () => {
   };
 
   const dockItems = [
-    {
-      icon: <Home className="h-6 w-6" />,
-      label: 'Profile',
-      path: '/',
-      onClick: () => navigate('/')
-    },
-    {
-      icon: <Users className="h-6 w-6" />,
-      label: 'Contacts',
-      path: '/contacts',
-      onClick: () => navigate('/contacts')
-    },
-    {
-      icon: <Calendar className="h-6 w-6" />,
-      label: 'Events',
-      path: '/events',
-      onClick: () => navigate('/events')
-    },
-    {
-      icon: <BarChart3 className="h-6 w-6" />,
-      label: 'Analytics',
-      path: '/analytics',
-      onClick: () => navigate('/analytics'),
-      className: 'bg-accent/30'
-    }
+    { icon: <Home className="h-6 w-6" />, label: 'Profile', path: '/', onClick: () => navigate('/') },
+    { icon: <Users className="h-6 w-6" />, label: 'Contacts', path: '/contacts', onClick: () => navigate('/contacts') },
+    { icon: <Calendar className="h-6 w-6" />, label: 'Events', path: '/events', onClick: () => navigate('/events') },
+    { icon: <BarChart3 className="h-6 w-6" />, label: 'Analytics', path: '/analytics', onClick: () => navigate('/analytics'), className: 'bg-accent/30' }
   ];
 
-  // Empty State
   if (totalContacts === 0) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <AppHeader />
-        <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
+        <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold">Analytics</h1>
-              <p className="text-muted-foreground mt-1">Track your networking performance</p>
+              <h1 className="text-2xl font-semibold">Analytics</h1>
+              <p className="text-sm text-muted-foreground mt-1">Track your networking performance</p>
             </div>
-            <Button variant="outline" className="gap-2 rounded-full">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
           </div>
-
-          <div className="flex flex-col items-center justify-center min-h-[500px] text-center rounded-2xl border border-border bg-card p-12">
-            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
-              <BarChart3 className="h-10 w-10 text-muted-foreground" />
-            </div>
-            <h2 className="text-2xl font-semibold mb-2">No Data Yet</h2>
-            <p className="text-muted-foreground mb-6 max-w-md">
-              Start building your network to see insights, charts, and performance metrics.
+          <div className="flex flex-col items-center justify-center min-h-[400px] text-center rounded-xl border border-border bg-card p-12">
+            <BarChart3 className="h-10 w-10 text-muted-foreground mb-4 opacity-40" />
+            <h2 className="text-lg font-medium mb-2">No data yet</h2>
+            <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+              Start building your network to see insights and metrics.
             </p>
-            <Button onClick={() => navigate('/contacts')} className="gap-2 rounded-full">
-              Get Started
-            </Button>
+            <Button onClick={() => navigate('/contacts')} size="sm">Get Started</Button>
           </div>
         </main>
-
-        {dockVisible && (
-          isMobile ? (
-            <MobileTabBar items={dockItems} />
-          ) : (
-            <motion.div
-              initial={{ y: 100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-              className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
-            >
-              <div className="pointer-events-auto">
-                <Dock
-                  items={dockItems}
-                  activeItem={location.pathname}
-                  panelHeight={68}
-                  baseItemSize={50}
-                  magnification={70}
-                />
-              </div>
-            </motion.div>
-          )
-        )}
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-          className="fixed bottom-4 right-4 z-50"
-        >
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setDockVisible(!dockVisible)}
-            className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background"
-          >
-            {dockVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </Button>
-        </motion.div>
+        {dockVisible && (isMobile ? <MobileTabBar items={dockItems} /> : (
+          <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none">
+            <div className="pointer-events-auto"><Dock items={dockItems} activeItem={location.pathname} panelHeight={68} baseItemSize={50} magnification={70} /></div>
+          </motion.div>
+        ))}
       </div>
     );
   }
@@ -182,472 +113,187 @@ const AnalyticsPage = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader />
       
-      <main className="flex-1 container mx-auto px-4 py-6 pb-32 max-w-7xl">
+      <main className="flex-1 container mx-auto px-4 py-6 pb-32 max-w-6xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Analytics</h1>
-            <p className="text-muted-foreground mt-1">Track your networking performance</p>
+            <h1 className="text-2xl font-semibold">Analytics</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Track your networking performance</p>
           </div>
-          <Button 
-            onClick={handleExportReport} 
-            variant="outline" 
-            className="gap-2 rounded-full"
-          >
+          <Button onClick={handleExportReport} variant="outline" size="sm" className="gap-2">
             <Download className="h-4 w-4" />
             Export
           </Button>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="rounded-2xl border border-border bg-card p-6"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Total Contacts</p>
-                <p className="text-3xl font-bold">{totalContacts}</p>
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          {[
+            { label: 'Total Contacts', value: totalContacts, trend: contactsTrend, icon: Users },
+            { label: 'Events', value: uniqueEventsCount, trend: eventsTrend, icon: Calendar },
+            { label: 'Industries', value: uniqueIndustriesCount, trend: industriesTrend, icon: Target },
+            { label: 'This Month', value: thisMonthCount, trend: monthlyTrend, icon: TrendingUp },
+          ].map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="rounded-xl border border-border bg-card p-4"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-muted-foreground">{stat.label}</span>
+                <stat.icon className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
-              <Users className="h-5 w-5 text-blue-500" />
-            </div>
-            <div className="flex items-center gap-1 text-sm">
-              {contactsTrend >= 0 ? (
-                <>
-                  <ArrowUpRight className="h-4 w-4 text-green-500" />
-                  <span className="text-green-500 font-medium">+{contactsTrend}%</span>
-                </>
-              ) : (
-                <>
-                  <ArrowDownRight className="h-4 w-4 text-red-500" />
-                  <span className="text-red-500 font-medium">{contactsTrend}%</span>
-                </>
-              )}
-              <span className="text-muted-foreground ml-1">vs last month</span>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="rounded-2xl border border-border bg-card p-6"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Events</p>
-                <p className="text-3xl font-bold">{uniqueEventsCount}</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-xl font-semibold">{stat.value}</span>
+                <span className={`text-xs ${stat.trend >= 0 ? 'text-emerald-600' : 'text-red-500'} flex items-center`}>
+                  {stat.trend >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                  {Math.abs(stat.trend)}%
+                </span>
               </div>
-              <Calendar className="h-5 w-5 text-purple-500" />
-            </div>
-            <div className="flex items-center gap-1 text-sm">
-              {eventsTrend >= 0 ? (
-                <>
-                  <ArrowUpRight className="h-4 w-4 text-green-500" />
-                  <span className="text-green-500 font-medium">+{eventsTrend}%</span>
-                </>
-              ) : (
-                <>
-                  <ArrowDownRight className="h-4 w-4 text-red-500" />
-                  <span className="text-red-500 font-medium">{eventsTrend}%</span>
-                </>
-              )}
-              <span className="text-muted-foreground ml-1">vs last month</span>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="rounded-2xl border border-border bg-card p-6"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Industries</p>
-                <p className="text-3xl font-bold">{uniqueIndustriesCount}</p>
-              </div>
-              <Target className="h-5 w-5 text-emerald-500" />
-            </div>
-            <div className="flex items-center gap-1 text-sm">
-              {industriesTrend >= 0 ? (
-                <>
-                  <ArrowUpRight className="h-4 w-4 text-green-500" />
-                  <span className="text-green-500 font-medium">+{industriesTrend}%</span>
-                </>
-              ) : (
-                <>
-                  <ArrowDownRight className="h-4 w-4 text-red-500" />
-                  <span className="text-red-500 font-medium">{industriesTrend}%</span>
-                </>
-              )}
-              <span className="text-muted-foreground ml-1">vs last month</span>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="rounded-2xl border border-border bg-card p-6"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">This Month</p>
-                <p className="text-3xl font-bold">{thisMonthCount}</p>
-              </div>
-              <TrendingUp className="h-5 w-5 text-orange-500" />
-            </div>
-            <div className="flex items-center gap-1 text-sm">
-              {monthlyTrend >= 0 ? (
-                <>
-                  <ArrowUpRight className="h-4 w-4 text-green-500" />
-                  <span className="text-green-500 font-medium">+{monthlyTrend}%</span>
-                </>
-              ) : (
-                <>
-                  <ArrowDownRight className="h-4 w-4 text-red-500" />
-                  <span className="text-red-500 font-medium">{monthlyTrend}%</span>
-                </>
-              )}
-              <span className="text-muted-foreground ml-1">vs last month</span>
-            </div>
-          </motion.div>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Main Content Tabs */}
+        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-6">
-          <TabsList className="bg-muted/50 p-1 rounded-full">
-            <TabsTrigger
-              value="overview"
-              className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-            >
-              <BarChart3 className="h-4 w-4 mr-2" />
+          <TabsList className="bg-muted/50 p-1 h-9">
+            <TabsTrigger value="overview" className="text-xs px-3 h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm">
               Overview
             </TabsTrigger>
-            <TabsTrigger
-              value="insights"
-              className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-            >
-              <Zap className="h-4 w-4 mr-2" />
+            <TabsTrigger value="insights" className="text-xs px-3 h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm">
               Insights
             </TabsTrigger>
-            <TabsTrigger
-              value="events"
-              className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-            >
-              <Calendar className="h-4 w-4 mr-2" />
+            <TabsTrigger value="events" className="text-xs px-3 h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm">
               Events
-              <Badge variant="secondary" className="ml-2 rounded-full h-5 min-w-5 px-1.5">
-                {eventData.length}
-              </Badge>
+              <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">{eventData.length}</Badge>
             </TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            {/* Growth Chart */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <ContactsGrowthChart data={growthData} />
-            </motion.div>
-
-            {/* Distribution Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35 }}
-              >
-                <EventDistributionChart data={eventStats} />
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <IndustryBreakdownChart data={industryStats} />
-              </motion.div>
+          {/* Overview */}
+          <TabsContent value="overview" className="space-y-4">
+            <ContactsGrowthChart data={growthData} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <EventDistributionChart data={eventStats} />
+              <IndustryBreakdownChart data={industryStats} />
             </div>
-
-            {/* Recent Activity */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.45 }}
-            >
-              <RecentActivityFeed contacts={recentContacts} />
-            </motion.div>
+            <RecentActivityFeed contacts={recentContacts} />
           </TabsContent>
 
-          {/* Insights Tab */}
-          <TabsContent value="insights" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Insights Panel */}
+          {/* Insights */}
+          <TabsContent value="insights" className="space-y-4">
+            <div className="grid gap-4 lg:grid-cols-2">
+              <InsightsPanel insights={insights} totalContacts={totalContacts} />
+              
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.15 }}
+                className="rounded-xl border border-border bg-card"
               >
-                <InsightsPanel insights={insights} totalContacts={totalContacts} />
-              </motion.div>
-
-              {/* Performance Metrics */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35 }}
-                className="rounded-2xl border border-border bg-card p-6"
-              >
-                <div className="flex items-center gap-2 mb-6">
-                  <Award className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Performance Metrics</h3>
+                <div className="p-5 border-b border-border">
+                  <span className="text-sm font-medium text-muted-foreground">Performance</span>
                 </div>
-
-                <div className="space-y-6">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Network Growth Rate</span>
-                      <span className="text-sm font-semibold">
-                        {contactsTrend >= 0 ? '+' : ''}{contactsTrend}%
-                      </span>
+                <div className="p-5 space-y-5">
+                  {[
+                    { label: 'Network Growth', value: contactsTrend, color: 'bg-primary' },
+                    { label: 'Event Engagement', value: Math.round((uniqueEventsCount / Math.max(totalContacts, 1)) * 100), color: 'bg-violet-500' },
+                    { label: 'Industry Diversity', value: Math.round((uniqueIndustriesCount / Math.max(totalContacts, 1)) * 100), color: 'bg-emerald-500' },
+                  ].map((metric, index) => (
+                    <div key={index}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-muted-foreground">{metric.label}</span>
+                        <span className="text-sm font-medium">{metric.value}%</span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div className={`h-full ${metric.color} rounded-full`} style={{ width: `${Math.min(metric.value * 2, 100)}%` }} />
+                      </div>
                     </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"
-                        style={{ width: `${Math.min(Math.abs(contactsTrend) * 5, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Event Engagement</span>
-                      <span className="text-sm font-semibold">
-                        {Math.round((uniqueEventsCount / Math.max(totalContacts, 1)) * 100)}%
-                      </span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
-                        style={{ width: `${Math.min((uniqueEventsCount / Math.max(totalContacts, 1)) * 100, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Industry Diversity</span>
-                      <span className="text-sm font-semibold">
-                        {Math.round((uniqueIndustriesCount / Math.max(totalContacts, 1)) * 100)}%
-                      </span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
-                        style={{ width: `${Math.min((uniqueIndustriesCount / Math.max(totalContacts, 1)) * 100, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Monthly Activity</span>
-                      <span className="text-sm font-semibold">
-                        {Math.round((thisMonthCount / Math.max(totalContacts, 1)) * 100)}%
-                      </span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full"
-                        style={{ width: `${Math.min((thisMonthCount / Math.max(totalContacts, 1)) * 100, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/10">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Award className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-semibold mb-1">Keep up the momentum!</p>
-                      <p className="text-sm text-muted-foreground">
-                        You're building a diverse network across multiple industries and events.
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </motion.div>
             </div>
 
-            {/* Additional Insights */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="rounded-2xl border border-border bg-card p-6"
-              >
-                <div className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-3">
-                    <Users className="h-6 w-6 text-blue-500" />
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: 'Avg per event', value: Math.round(totalContacts / Math.max(uniqueEventsCount, 1)), icon: Users },
+                { label: 'Avg per industry', value: Math.round(totalContacts / Math.max(uniqueIndustriesCount, 1)), icon: Target },
+                { label: 'Daily avg (30d)', value: (thisMonthCount / 30).toFixed(1), icon: TrendingUp },
+              ].map((stat, index) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 + index * 0.05 }}
+                  className="rounded-xl border border-border bg-card p-5 text-center"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                    <stat.icon className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <p className="text-2xl font-bold mb-1">
-                    {Math.round(totalContacts / Math.max(uniqueEventsCount, 1))}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Avg contacts per event</p>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.45 }}
-                className="rounded-2xl border border-border bg-card p-6"
-              >
-                <div className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-3">
-                    <Target className="h-6 w-6 text-purple-500" />
-                  </div>
-                  <p className="text-2xl font-bold mb-1">
-                    {Math.round(totalContacts / Math.max(uniqueIndustriesCount, 1))}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Avg contacts per industry</p>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="rounded-2xl border border-border bg-card p-6"
-              >
-                <div className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
-                    <TrendingUp className="h-6 w-6 text-emerald-500" />
-                  </div>
-                  <p className="text-2xl font-bold mb-1">
-                    {Math.round((thisMonthCount / 30) * 10) / 10}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Contacts per day (30d avg)</p>
-                </div>
-              </motion.div>
+                  <p className="text-xl font-semibold">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+                </motion.div>
+              ))}
             </div>
           </TabsContent>
 
-          {/* Events Tab */}
-          <TabsContent value="events" className="space-y-6">
+          {/* Events */}
+          <TabsContent value="events" className="space-y-4">
             {eventData.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {eventData.map((event, index) => (
                   <motion.div
                     key={event.eventName}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="rounded-2xl border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                    transition={{ delay: index * 0.03 }}
                     onClick={() => handleViewTimeline(event)}
+                    className="rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 transition-colors cursor-pointer group"
                   >
-                    <div className="h-32 bg-gradient-to-br from-violet-500 to-purple-600 relative">
-                      <div className="absolute inset-0 bg-black/10" />
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <h3 className="text-lg font-bold text-white truncate">
-                          {event.eventName}
-                        </h3>
+                    <div className="h-24 bg-gradient-to-br from-primary/80 to-primary relative">
+                      <div className="absolute bottom-3 left-4 right-4">
+                        <h3 className="text-sm font-semibold text-primary-foreground truncate">{event.eventName}</h3>
                       </div>
                     </div>
-
-                    <div className="p-6">
-                      <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="p-4">
+                      <div className="flex items-center justify-between text-sm">
                         <div>
-                          <p className="text-2xl font-bold">{event.contactCount}</p>
-                          <p className="text-xs text-muted-foreground">Contacts</p>
+                          <span className="text-lg font-semibold">{event.contactCount}</span>
+                          <span className="text-muted-foreground ml-1">contacts</span>
                         </div>
-                        <div>
-                          <p className="text-2xl font-bold">
-                            {new Date(event.mostRecentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </p>
-                          <p className="text-xs text-muted-foreground">Date</p>
-                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(event.mostRecentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
                       </div>
-
-                      <Button variant="outline" className="w-full gap-2 rounded-full" size="sm">
-                        View Details
-                      </Button>
                     </div>
                   </motion.div>
                 ))}
               </div>
             ) : (
-              <div className="rounded-2xl border border-border bg-card p-12 text-center">
-                <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
-                  <Calendar className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">No Events Tracked</h3>
-                <p className="text-muted-foreground mb-6">
-                  Events will appear here once you tag contacts with event names.
-                </p>
-                <Button onClick={() => navigate('/contacts')} className="gap-2 rounded-full">
-                  Add Contacts
-                </Button>
+              <div className="rounded-xl border border-border bg-card p-12 text-center">
+                <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-4 opacity-40" />
+                <h3 className="text-lg font-medium mb-2">No events tracked</h3>
+                <p className="text-sm text-muted-foreground mb-6">Events will appear once you tag contacts with event names.</p>
+                <Button onClick={() => navigate('/contacts')} size="sm">Add Contacts</Button>
               </div>
             )}
           </TabsContent>
         </Tabs>
       </main>
 
-      {/* Event Timeline Modal */}
-      <EventTimeline
-        event={selectedEvent}
-        open={timelineOpen}
-        onClose={() => setTimelineOpen(false)}
-      />
+      <EventTimeline event={selectedEvent} open={timelineOpen} onClose={() => setTimelineOpen(false)} />
 
-      {/* Adaptive Navigation */}
       {dockVisible && (
-        isMobile ? (
-          <MobileTabBar items={dockItems} />
-        ) : (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
-          >
-            <div className="pointer-events-auto">
-              <Dock
-                items={dockItems}
-                activeItem={location.pathname}
-                panelHeight={68}
-                baseItemSize={50}
-                magnification={70}
-              />
-            </div>
+        isMobile ? <MobileTabBar items={dockItems} /> : (
+          <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.3, delay: 0.2 }} className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none">
+            <div className="pointer-events-auto"><Dock items={dockItems} activeItem={location.pathname} panelHeight={68} baseItemSize={50} magnification={70} /></div>
           </motion.div>
         )
       )}
 
-      {/* Dock Visibility Toggle */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.3 }}
-        className="fixed bottom-4 right-4 z-50"
-      >
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setDockVisible(!dockVisible)}
-          className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background"
-        >
+      <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }} className="fixed bottom-4 right-4 z-50">
+        <Button variant="outline" size="icon" onClick={() => setDockVisible(!dockVisible)} className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background">
           {dockVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </Button>
       </motion.div>
