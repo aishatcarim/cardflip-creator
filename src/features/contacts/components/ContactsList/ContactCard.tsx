@@ -124,9 +124,10 @@ export const ContactCard = ({ contact, index, onEdit, onDelete, onExport }: Cont
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.03, duration: 0.2 }}
+        className="h-full"
       >
         <Card
-          className="group relative overflow-hidden border border-border/50 bg-card hover:border-border hover:shadow-lg transition-all duration-300 cursor-pointer"
+          className="group relative overflow-hidden border border-border/50 bg-card hover:border-border hover:shadow-lg transition-all duration-300 cursor-pointer h-full flex flex-col"
           onClick={handleCardClick}
         >
           {/* Status indicator line */}
@@ -137,10 +138,10 @@ export const ContactCard = ({ contact, index, onEdit, onDelete, onExport }: Cont
             }`} />
           )}
 
-          <div className="p-5 space-y-4">
+          <div className="p-4 sm:p-5 flex flex-col flex-1 min-h-[280px]">
             {/* Header */}
-            <div className="flex items-start gap-4">
-              <Avatar className={`h-12 w-12 ${getAvatarColor(contact.contactName)}`}>
+            <div className="flex items-start gap-3 sm:gap-4">
+              <Avatar className={`h-10 w-10 sm:h-12 sm:w-12 shrink-0 ${getAvatarColor(contact.contactName)}`}>
                 <AvatarFallback className="text-white font-semibold">
                   {getInitials(contact.contactName)}
                 </AvatarFallback>
@@ -168,8 +169,8 @@ export const ContactCard = ({ contact, index, onEdit, onDelete, onExport }: Cont
               </div>
             </div>
 
-            {/* Details */}
-            <div className="space-y-2">
+            {/* Details - Fixed height section */}
+            <div className="space-y-2 mt-4 flex-1">
               {contact.company && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Building2 className="h-4 w-4 shrink-0" />
@@ -183,60 +184,56 @@ export const ContactCard = ({ contact, index, onEdit, onDelete, onExport }: Cont
                   <span className="truncate">{contact.industry}</span>
                 </div>
               )}
+
+              {/* Event Tags */}
+              <div className="pt-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {eventTags.slice(0, 2).map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="outline"
+                      className="text-xs font-normal bg-muted/50 max-w-[120px] truncate"
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                  {eventTags.length > 2 && (
+                    <Badge variant="outline" className="text-xs font-normal">
+                      +{eventTags.length - 2}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Interests */}
+              {contact.interests.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {contact.interests.slice(0, 2).map((interest) => (
+                    <span
+                      key={interest}
+                      className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary truncate max-w-[100px]"
+                    >
+                      {interest}
+                    </span>
+                  ))}
+                  {contact.interests.length > 2 && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                      +{contact.interests.length - 2}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Event Tags */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Calendar className="h-3.5 w-3.5" />
-                <span>Events</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {eventTags.slice(0, 3).map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="outline"
-                    className="text-xs font-normal bg-muted/50"
-                  >
-                    {tag}
-                  </Badge>
-                ))}
-                {eventTags.length > 3 && (
-                  <Badge variant="outline" className="text-xs font-normal">
-                    +{eventTags.length - 3}
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            {/* Interests */}
-            {contact.interests.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {contact.interests.slice(0, 3).map((interest) => (
-                  <span
-                    key={interest}
-                    className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary"
-                  >
-                    {interest}
-                  </span>
-                ))}
-                {contact.interests.length > 3 && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                    +{contact.interests.length - 3}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Notes Preview */}
+            {/* Notes Preview - truncated to 2 lines */}
             {contact.notes && (
-              <p className="text-sm text-muted-foreground line-clamp-2 italic">
+              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 italic mt-2">
                 "{contact.notes}"
               </p>
             )}
 
-            {/* Footer */}
-            <div className="flex items-center justify-between pt-3 border-t border-border/50">
+            {/* Footer - Always at bottom */}
+            <div className="flex items-center justify-between pt-3 mt-auto border-t border-border/50">
               <span className="text-xs text-muted-foreground">
                 Added {formatDistanceToNow(new Date(contact.taggedAt), { addSuffix: true })}
               </span>
