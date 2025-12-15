@@ -7,7 +7,8 @@ import { AICopilotChat } from '../components/AI/AICopilotChat';
 import { ContactProfile } from '../components/ContactDetail/ContactProfile';
 import { ContactActivity } from '../components/ContactDetail/ContactActivity';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
-import { ArrowLeft, Edit, Download, Linkedin, Mail } from 'lucide-react';
+import { ArrowLeft, Edit, Download, Mail, Clock, Sparkles, Users, MessageSquare } from 'lucide-react';
+import { Card } from '@shared/ui/card';
 
 const ContactDetailPage = () => {
   const { contactId } = useParams();
@@ -103,30 +104,69 @@ const ContactDetailPage = () => {
 
           {/* Right: AI Copilot (70%) */}
           <div className="lg:col-span-2">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-              <TabsList>
-                <TabsTrigger value="copilot">
-                  🤖 AI Copilot
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+              <TabsList className="w-fit">
+                <TabsTrigger value="copilot" className="gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  AI Copilot
                 </TabsTrigger>
-                <TabsTrigger value="history">
-                  📜 History
+                <TabsTrigger value="history" className="gap-2">
+                  <Clock className="h-4 w-4" />
+                  History
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="copilot" className="h-full mt-4">
+              <TabsContent value="copilot" className="flex-1 mt-4">
                 <AICopilotChat contact={contact} />
               </TabsContent>
 
-              <TabsContent value="history" className="h-full mt-4">
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
-                      📜
+              <TabsContent value="history" className="flex-1 mt-4">
+                <Card className="h-full rounded-xl border border-border bg-card p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                        <Clock className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-foreground">Interaction History</h3>
+                        <p className="text-xs text-muted-foreground">Track your interactions with {contact.contactName}</p>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">Interaction History</h3>
-                    <p>Coming soon - Track all your interactions with {contact.contactName}</p>
+                    
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Users className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground">Met at {contact.event}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{contact.taggedAt}</p>
+                        </div>
+                      </div>
+                      
+                      {contact.followUpStatus === 'done' && contact.followUpDate && (
+                        <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                          <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                            <Mail className="h-4 w-4 text-emerald-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground">Follow-up completed</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{contact.followUpDate}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-start gap-3 p-3 rounded-lg border border-dashed border-border">
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                          <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-muted-foreground">More interaction tracking coming soon</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </Card>
               </TabsContent>
             </Tabs>
           </div>
