@@ -5,18 +5,15 @@ import { ContactSearchBar } from "../components/ContactsList/ContactSearchBar";
 import { ContactFilters } from "../components/ContactsList/ContactFilters";
 import { ContactCard } from "../components/ContactsList/ContactCard";
 import { ContactTagModal } from "../components/ContactActions/ContactTagModal";
+import { NetworkDashboard } from "../components/ContactDashboard/NetworkDashboard";
 import { EmptyState } from '@shared/components';
 import { Button } from "@shared/ui/button";
 import { Checkbox } from "@shared/ui/checkbox";
 import { Badge } from "@shared/ui/badge";
-import { ScrollArea } from "@shared/ui/scroll-area";
 import { Card } from "@shared/ui/card";
-import { Avatar, AvatarFallback } from "@shared/ui/avatar";
-import { Progress } from "@shared/ui/progress";
 import { 
   Users, QrCode, UserPlus, Download, Sparkles, BarChart3, LayoutGrid, Calendar, 
-  EyeOff, Eye, Filter, TrendingUp, Clock, AlertCircle, Search, 
-  ChevronRight, Building2, Briefcase, ArrowUpRight
+  EyeOff, Eye, Filter
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -97,24 +94,28 @@ const ContactsPage = () => {
     onSwipeRight: () => isMobile && navigate('/')
   });
 
-  // Calculate priority contacts
-  const priorityContacts = useMemo(() => {
+  // Priority contacts count for badge
+  const priorityContactsCount = useMemo(() => {
     return contacts.filter(c => {
       const daysSince = getDaysSince(c.taggedAt);
       const isOverdue = c.followUpDueDate && new Date(c.followUpDueDate) < new Date();
       const isDueSoon = c.followUpDueDate && getDaysUntil(c.followUpDueDate) <= 3;
       const isRecent = daysSince <= 2;
       return isOverdue || isDueSoon || isRecent;
-    }).sort((a, b) => {
-      const aOverdue = a.followUpDueDate && new Date(a.followUpDueDate) < new Date();
-      const bOverdue = b.followUpDueDate && new Date(b.followUpDueDate) < new Date();
-      if (aOverdue && !bOverdue) return -1;
-      if (!aOverdue && bOverdue) return 1;
-      return new Date(b.taggedAt).getTime() - new Date(a.taggedAt).getTime();
-    });
+    }).length;
   }, [contacts]);
 
-  // Extract unique events and industries
+  // Follow-ups due today for header highlight
+  const followUpsDueToday = useMemo(
+    () => contacts.filter((contact) => isDateToday(contact.followUpDueDate)).length,
+    [contacts]
+  );
+
+  const highlightText = followUpsDueToday > 0
+    ? `You have ${followUpsDueToday} follow-up${followUpsDueToday !== 1 ? "s" : ""} due today.`
+    : undefined;
+
+  // Extract unique events and industries for filters
   const events = useMemo(
     () => [...new Set(contacts.flatMap((c) => c.eventTags || [c.event]))].sort(),
     [contacts]
@@ -125,34 +126,9 @@ const ContactsPage = () => {
     [contacts]
   );
 
-  // Stats
-  const followUpsDueToday = useMemo(
-    () => contacts.filter((contact) => isDateToday(contact.followUpDueDate)).length,
-    [contacts]
-  );
-
-  const newContactsThisWeek = useMemo(
-    () => contacts.filter((contact) => getDaysSince(contact.taggedAt) <= 7).length,
-    [contacts]
-  );
-
-  const overdueCount = useMemo(
-    () => contacts.filter((c) => c.followUpDueDate && new Date(c.followUpDueDate) < new Date()).length,
-    [contacts]
-  );
-
-  const completedFollowUps = useMemo(
-    () => contacts.filter((c) => c.followUpStatus === 'done').length,
-    [contacts]
-  );
-
-  const highlightText = followUpsDueToday > 0
-    ? `You have ${followUpsDueToday} follow-up${followUpsDueToday !== 1 ? "s" : ""} due today.`
-    : undefined;
-
   // Filter and sort contacts
   const filteredContacts = useMemo(() => {
-    let filtered = contacts;
+    let filtered = [...contacts];
 
     if (searchQuery) {
       const lowerQuery = searchQuery.toLowerCase();
@@ -199,33 +175,6 @@ const ContactsPage = () => {
     return filtered;
   }, [contacts, searchQuery, selectedEvent, selectedIndustry, sortBy]);
 
-  // Event stats for dashboard
-  const eventStats = useMemo(() => {
-    const stats: Record<string, number> = {};
-    contacts.forEach(c => {
-      const tags = c.eventTags || [c.event];
-      tags.forEach(tag => {
-        stats[tag] = (stats[tag] || 0) + 1;
-      });
-    });
-    return Object.entries(stats)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-  }, [contacts]);
-
-  // Industry stats for dashboard
-  const industryStats = useMemo(() => {
-    const stats: Record<string, number> = {};
-    contacts.forEach(c => {
-      if (c.industry) {
-        stats[c.industry] = (stats[c.industry] || 0) + 1;
-      }
-    });
-    return Object.entries(stats)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-  }, [contacts]);
-
   // Handlers
   const handleSelectContact = (id: string) => {
     setSelectedContacts((prev) =>
@@ -270,17 +219,9 @@ const ContactsPage = () => {
     toast.success("Contact deleted");
   };
 
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
-  const getAvatarColor = (name: string) => {
-    const colors = ["bg-blue-500", "bg-green-500", "bg-purple-500", "bg-orange-500", "bg-pink-500"];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
+  const openAddContactModal = () => {
+    setEditingContact(null);
+    setShowTagModal(true);
   };
 
   const dockItems = [
@@ -309,9 +250,9 @@ const ContactsPage = () => {
               >
                 <Sparkles className="h-4 w-4 mr-2" />
                 Dashboard
-                {priorityContacts.length > 0 && (
+                {priorityContactsCount > 0 && (
                   <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5 text-xs">
-                    {priorityContacts.length}
+                    {priorityContactsCount}
                   </Badge>
                 )}
               </TabsTrigger>
@@ -327,205 +268,26 @@ const ContactsPage = () => {
               </TabsTrigger>
             </TabsList>
 
-            <Button
-              onClick={() => {
-                setEditingContact(null);
-                setShowTagModal(true);
-              }}
-              className="gap-2"
-            >
+            <Button onClick={openAddContactModal} className="gap-2">
               <UserPlus className="h-4 w-4" />
               Add Contact
             </Button>
           </div>
 
           {/* Dashboard Tab */}
-          <TabsContent value="dashboard" className="space-y-6 mt-0">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Total Contacts", value: contacts.length, icon: Users, color: "text-foreground" },
-                { label: "New This Week", value: newContactsThisWeek, icon: TrendingUp, color: "text-green-500" },
-                { label: "Due Today", value: followUpsDueToday, icon: Clock, color: "text-blue-500" },
-                { label: "Overdue", value: overdueCount, icon: AlertCircle, color: "text-destructive" },
-              ].map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Card className="p-5 border-border/50 hover:border-border transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">{stat.label}</p>
-                        <p className={`text-3xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
-                      </div>
-                      <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Main Content Grid */}
-            <div className="grid gap-6 lg:grid-cols-3">
-              {/* Priority Contacts */}
-              <Card className="lg:col-span-2 border-border/50">
-                <div className="p-5 border-b border-border/50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">Priority Follow-ups</h3>
-                      <p className="text-sm text-muted-foreground mt-0.5">Contacts needing attention</p>
-                    </div>
-                    {priorityContacts.length > 0 && (
-                      <Badge variant="secondary">{priorityContacts.length}</Badge>
-                    )}
-                  </div>
-                </div>
-                <ScrollArea className="h-[400px]">
-                  <div className="p-5 space-y-3">
-                    {priorityContacts.length > 0 ? (
-                      priorityContacts.slice(0, 8).map((contact) => {
-                        const isOverdue = contact.followUpDueDate && new Date(contact.followUpDueDate) < new Date();
-                        return (
-                          <motion.div
-                            key={contact.id}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="flex items-center gap-4 p-3 rounded-lg border border-border/50 hover:border-border hover:bg-muted/30 transition-all cursor-pointer group"
-                            onClick={() => navigate(`/contacts/${contact.id}`)}
-                          >
-                            <Avatar className={`h-10 w-10 ${getAvatarColor(contact.contactName)}`}>
-                              <AvatarFallback className="text-white text-sm">
-                                {getInitials(contact.contactName)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium truncate">{contact.contactName}</p>
-                              <p className="text-sm text-muted-foreground truncate">
-                                {contact.company || contact.event}
-                              </p>
-                            </div>
-                            <Badge variant={isOverdue ? "destructive" : "secondary"} className="shrink-0">
-                              {isOverdue ? "Overdue" : "Due Soon"}
-                            </Badge>
-                            <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </motion.div>
-                        );
-                      })
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="rounded-full bg-muted p-4 mb-4">
-                          <Sparkles className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                        <p className="font-medium">All caught up!</p>
-                        <p className="text-sm text-muted-foreground mt-1">No urgent follow-ups</p>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </Card>
-
-              {/* Quick Stats Sidebar */}
-              <div className="space-y-6">
-                {/* Events Breakdown */}
-                <Card className="border-border/50">
-                  <div className="p-5 border-b border-border/50">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold">By Event</h3>
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
-                  <div className="p-5 space-y-4">
-                    {eventStats.length > 0 ? (
-                      eventStats.map(([event, count]) => (
-                        <div key={event} className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="truncate">{event}</span>
-                            <span className="text-muted-foreground">{count}</span>
-                          </div>
-                          <Progress value={(count / contacts.length) * 100} className="h-1.5" />
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">No events yet</p>
-                    )}
-                    {events.length > 5 && (
-                      <Button
-                        variant="ghost"
-                        className="w-full text-sm"
-                        onClick={() => {
-                          setActiveSection("directory");
-                        }}
-                      >
-                        View All Events
-                        <ArrowUpRight className="h-3 w-3 ml-1" />
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-
-                {/* Industries Breakdown */}
-                <Card className="border-border/50">
-                  <div className="p-5 border-b border-border/50">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold">By Industry</h3>
-                      <Briefcase className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
-                  <div className="p-5 space-y-4">
-                    {industryStats.length > 0 ? (
-                      industryStats.map(([industry, count]) => (
-                        <div key={industry} className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="truncate">{industry}</span>
-                            <span className="text-muted-foreground">{count}</span>
-                          </div>
-                          <Progress value={(count / contacts.length) * 100} className="h-1.5" />
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">No industries yet</p>
-                    )}
-                  </div>
-                </Card>
-
-                {/* Follow-up Progress */}
-                <Card className="border-border/50">
-                  <div className="p-5">
-                    <h3 className="font-semibold mb-4">Follow-up Progress</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Completed</span>
-                        <span className="font-medium">{completedFollowUps}/{contacts.length}</span>
-                      </div>
-                      <Progress 
-                        value={contacts.length > 0 ? (completedFollowUps / contacts.length) * 100 : 0} 
-                        className="h-2" 
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        {contacts.length > 0 
-                          ? `${Math.round((completedFollowUps / contacts.length) * 100)}% of contacts followed up`
-                          : "Add contacts to track follow-ups"
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-            </div>
+          <TabsContent value="dashboard" className="mt-0">
+            <NetworkDashboard contacts={contacts} onAddContact={openAddContactModal} />
           </TabsContent>
 
           {/* Directory Tab */}
           <TabsContent value="directory" className="space-y-6 mt-0">
             {/* Search and Filters */}
-            <Card className="p-5 border-border/50">
+            <Card className="p-4 sm:p-5 border-border/50">
               <div className="flex flex-col lg:flex-row gap-4">
                 <div className="flex-1">
                   <ContactSearchBar value={searchQuery} onChange={setSearchQuery} />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button
                     size="sm"
                     variant="outline"
@@ -550,7 +312,7 @@ const ContactsPage = () => {
                   )}
                   <Button size="sm" variant="outline" onClick={handleExportCSV} className="gap-2">
                     <Download className="h-4 w-4" />
-                    Export
+                    <span className="hidden sm:inline">Export</span>
                   </Button>
                 </div>
               </div>
@@ -624,14 +386,7 @@ const ContactsPage = () => {
                           Go to Profile
                         </Button>
                       )}
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setEditingContact(null);
-                          setShowTagModal(true);
-                        }}
-                        className="gap-2"
-                      >
+                      <Button variant="outline" onClick={openAddContactModal} className="gap-2">
                         <UserPlus className="h-4 w-4" />
                         Add Contact
                       </Button>
@@ -640,14 +395,14 @@ const ContactsPage = () => {
                 />
               </motion.div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredContacts.map((contact, index) => (
                   <motion.div
                     key={contact.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.03 }}
-                    className="relative"
+                    className="relative h-full"
                   >
                     {selectedContacts.length > 0 && (
                       <div className="absolute -top-2 -left-2 z-20">
