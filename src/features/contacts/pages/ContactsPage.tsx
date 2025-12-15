@@ -5,16 +5,19 @@ import { ContactSearchBar } from "../components/ContactsList/ContactSearchBar";
 import { ContactFilters } from "../components/ContactsList/ContactFilters";
 import { ContactCard } from "../components/ContactsList/ContactCard";
 import { ContactTagModal } from "../components/ContactActions/ContactTagModal";
-import { ExportMenu } from "../components/ContactActions/ExportMenu";
-import { ContactsPriorityQueue } from "../components/ContactDashboard/ContactsPriorityQueue";
-import { ContactsInsights } from "../components/ContactDashboard/ContactsInsights";
-import { ContactsByEvent } from "../components/ContactDashboard/ContactsByEvent";
 import { EmptyState } from '@shared/components';
 import { Button } from "@shared/ui/button";
 import { Checkbox } from "@shared/ui/checkbox";
 import { Badge } from "@shared/ui/badge";
 import { ScrollArea } from "@shared/ui/scroll-area";
-import { Users, QrCode, UserPlus, Download, Sparkles, BarChart3, LayoutGrid, Calendar, EyeOff, Eye, Filter, Inbox, Archive, Send, TrendingUp, Clock, AlertCircle } from "lucide-react";
+import { Card } from "@shared/ui/card";
+import { Avatar, AvatarFallback } from "@shared/ui/avatar";
+import { Progress } from "@shared/ui/progress";
+import { 
+  Users, QrCode, UserPlus, Download, Sparkles, BarChart3, LayoutGrid, Calendar, 
+  EyeOff, Eye, Filter, TrendingUp, Clock, AlertCircle, Search, 
+  ChevronRight, Building2, Briefcase, ArrowUpRight
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useRef } from "react";
@@ -63,7 +66,7 @@ const ContactsPage = () => {
   const [activeSection, setActiveSection] = useState<ContactsSectionTab>("dashboard");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Helper functions for priority calculation
+  // Helper functions
   const getDaysSince = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -77,60 +80,6 @@ const ContactsPage = () => {
     return Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  // Mobile swipe navigation
-  useSwipe(mainContentRef, {
-    onSwipeLeft: () => {
-      if (isMobile) {
-        navigate('/events');
-      }
-    },
-    onSwipeRight: () => {
-      if (isMobile) {
-        navigate('/');
-      }
-    }
-  });
-
-  // Calculate priority contacts (needs attention)
-  const priorityContacts = useMemo(() => {
-    return contacts.filter(c => {
-      const daysSince = getDaysSince(c.taggedAt);
-      const isOverdue = c.followUpDueDate &&
-                       new Date(c.followUpDueDate) < new Date();
-      const isDueSoon = c.followUpDueDate &&
-                       getDaysUntil(c.followUpDueDate) <= 3;
-      const isRecent = daysSince <= 2;
-
-      return isOverdue || isDueSoon || isRecent;
-    }).sort((a, b) => {
-      // Sort by urgency
-      const aOverdue = a.followUpDueDate && new Date(a.followUpDueDate) < new Date();
-      const bOverdue = b.followUpDueDate && new Date(b.followUpDueDate) < new Date();
-
-      if (aOverdue && !bOverdue) return -1;
-      if (!aOverdue && bOverdue) return 1;
-
-      const aDueSoon = a.followUpDueDate && getDaysUntil(a.followUpDueDate) <= 3;
-      const bDueSoon = b.followUpDueDate && getDaysUntil(b.followUpDueDate) <= 3;
-
-      if (aDueSoon && !bDueSoon) return -1;
-      if (!aDueSoon && bDueSoon) return 1;
-
-      return new Date(b.taggedAt).getTime() - new Date(a.taggedAt).getTime();
-    });
-  }, [contacts]);
-
-  // Extract unique events and industries
-  const events = useMemo(
-    () => [...new Set(contacts.map((c) => c.event))].sort(),
-    [contacts]
-  );
-
-  const industries = useMemo(
-    () => [...new Set(contacts.map((c) => c.industry).filter(Boolean))].sort(),
-    [contacts]
-  );
-
   const isDateToday = (dateString?: string) => {
     if (!dateString) return false;
     const date = new Date(dateString);
@@ -142,21 +91,45 @@ const ContactsPage = () => {
     );
   };
 
-  const formatDueDateLabel = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
+  // Mobile swipe navigation
+  useSwipe(mainContentRef, {
+    onSwipeLeft: () => isMobile && navigate('/events'),
+    onSwipeRight: () => isMobile && navigate('/')
+  });
 
+  // Calculate priority contacts
+  const priorityContacts = useMemo(() => {
+    return contacts.filter(c => {
+      const daysSince = getDaysSince(c.taggedAt);
+      const isOverdue = c.followUpDueDate && new Date(c.followUpDueDate) < new Date();
+      const isDueSoon = c.followUpDueDate && getDaysUntil(c.followUpDueDate) <= 3;
+      const isRecent = daysSince <= 2;
+      return isOverdue || isDueSoon || isRecent;
+    }).sort((a, b) => {
+      const aOverdue = a.followUpDueDate && new Date(a.followUpDueDate) < new Date();
+      const bOverdue = b.followUpDueDate && new Date(b.followUpDueDate) < new Date();
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      return new Date(b.taggedAt).getTime() - new Date(a.taggedAt).getTime();
+    });
+  }, [contacts]);
+
+  // Extract unique events and industries
+  const events = useMemo(
+    () => [...new Set(contacts.flatMap((c) => c.eventTags || [c.event]))].sort(),
+    [contacts]
+  );
+
+  const industries = useMemo(
+    () => [...new Set(contacts.map((c) => c.industry).filter(Boolean))].sort(),
+    [contacts]
+  );
+
+  // Stats
   const followUpsDueToday = useMemo(
     () => contacts.filter((contact) => isDateToday(contact.followUpDueDate)).length,
     [contacts]
   );
-
-  const highlightText =
-    followUpsDueToday > 0
-      ? `You have ${followUpsDueToday} follow-up${followUpsDueToday !== 1 ? "s" : ""} due today.`
-      : undefined;
 
   const newContactsThisWeek = useMemo(
     () => contacts.filter((contact) => getDaysSince(contact.taggedAt) <= 7).length,
@@ -168,11 +141,19 @@ const ContactsPage = () => {
     [contacts]
   );
 
+  const completedFollowUps = useMemo(
+    () => contacts.filter((c) => c.followUpStatus === 'done').length,
+    [contacts]
+  );
+
+  const highlightText = followUpsDueToday > 0
+    ? `You have ${followUpsDueToday} follow-up${followUpsDueToday !== 1 ? "s" : ""} due today.`
+    : undefined;
+
   // Filter and sort contacts
   const filteredContacts = useMemo(() => {
     let filtered = contacts;
 
-    // Search filter
     if (searchQuery) {
       const lowerQuery = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -182,21 +163,21 @@ const ContactsPage = () => {
           c.event.toLowerCase().includes(lowerQuery) ||
           c.industry.toLowerCase().includes(lowerQuery) ||
           c.company?.toLowerCase().includes(lowerQuery) ||
-          c.email?.toLowerCase().includes(lowerQuery)
+          c.email?.toLowerCase().includes(lowerQuery) ||
+          (c.eventTags || []).some(tag => tag.toLowerCase().includes(lowerQuery))
       );
     }
 
-    // Event filter
     if (selectedEvent !== "all") {
-      filtered = filtered.filter((c) => c.event === selectedEvent);
+      filtered = filtered.filter((c) => 
+        c.event === selectedEvent || (c.eventTags || []).includes(selectedEvent)
+      );
     }
 
-    // Industry filter
     if (selectedIndustry !== "all") {
       filtered = filtered.filter((c) => c.industry === selectedIndustry);
     }
 
-    // Sort
     switch (sortBy) {
       case "date-desc":
         filtered.sort((a, b) => new Date(b.taggedAt).getTime() - new Date(a.taggedAt).getTime());
@@ -218,15 +199,34 @@ const ContactsPage = () => {
     return filtered;
   }, [contacts, searchQuery, selectedEvent, selectedIndustry, sortBy]);
 
-  const quickEventFilters = events.slice(0, 4);
-  const quickIndustryFilters = industries.slice(0, 3);
+  // Event stats for dashboard
+  const eventStats = useMemo(() => {
+    const stats: Record<string, number> = {};
+    contacts.forEach(c => {
+      const tags = c.eventTags || [c.event];
+      tags.forEach(tag => {
+        stats[tag] = (stats[tag] || 0) + 1;
+      });
+    });
+    return Object.entries(stats)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+  }, [contacts]);
 
-  const toggleEventFilter = (value: string) =>
-    setSelectedEvent((prev) => (prev === value ? "all" : value));
+  // Industry stats for dashboard
+  const industryStats = useMemo(() => {
+    const stats: Record<string, number> = {};
+    contacts.forEach(c => {
+      if (c.industry) {
+        stats[c.industry] = (stats[c.industry] || 0) + 1;
+      }
+    });
+    return Object.entries(stats)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+  }, [contacts]);
 
-  const toggleIndustryFilter = (value: string) =>
-    setSelectedIndustry((prev) => (prev === value ? "all" : value));
-
+  // Handlers
   const handleSelectContact = (id: string) => {
     setSelectedContacts((prev) =>
       prev.includes(id) ? prev.filter((cid) => cid !== id) : [...prev, id]
@@ -253,11 +253,6 @@ const ContactsPage = () => {
     toast.success("Contacts exported as CSV");
   };
 
-  const handleExportAllVCards = () => {
-    filteredContacts.forEach((contact) => exportContactVCard(contact.id));
-    toast.success(`Exported ${filteredContacts.length} vCard${filteredContacts.length !== 1 ? 's' : ''}`);
-  };
-
   const handleExportSelectedVCards = () => {
     if (selectedContacts.length > 0) {
       exportMultipleVCards(selectedContacts);
@@ -275,32 +270,24 @@ const ContactsPage = () => {
     toast.success("Contact deleted");
   };
 
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const getAvatarColor = (name: string) => {
+    const colors = ["bg-blue-500", "bg-green-500", "bg-purple-500", "bg-orange-500", "bg-pink-500"];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
   const dockItems = [
-    {
-      icon: <QrCode size={20} />,
-      label: "Profile",
-      path: "/",
-      onClick: () => navigate("/"),
-    },
-    {
-      icon: <Users size={20} />,
-      label: "Contacts",
-      path: "/contacts",
-      onClick: () => navigate("/contacts"),
-      className: "bg-accent/30",
-    },
-    {
-      icon: <Calendar size={20} />,
-      label: "Events",
-      path: "/events",
-      onClick: () => navigate("/events"),
-    },
-    {
-      icon: <BarChart3 size={20} />,
-      label: "Analytics",
-      path: "/analytics",
-      onClick: () => navigate("/analytics"),
-    },
+    { icon: <QrCode size={20} />, label: "Profile", path: "/", onClick: () => navigate("/") },
+    { icon: <Users size={20} />, label: "Contacts", path: "/contacts", onClick: () => navigate("/contacts"), className: "bg-accent/30" },
+    { icon: <Calendar size={20} />, label: "Events", path: "/events", onClick: () => navigate("/events") },
+    { icon: <BarChart3 size={20} />, label: "Analytics", path: "/analytics", onClick: () => navigate("/analytics") },
   ];
 
   return (
@@ -308,45 +295,44 @@ const ContactsPage = () => {
       <AppHeader highlightText={highlightText} />
 
       <div ref={mainContentRef} className="flex-1 container mx-auto px-4 py-6 pb-24 max-w-7xl">
-        {/* Main Tabs */}
         <Tabs
           value={activeSection}
           onValueChange={(value) => setActiveSection(value as ContactsSectionTab)}
           className="space-y-6"
         >
-          <div className="flex items-center justify-between">
-            <TabsList className="bg-muted/50 p-1 rounded-full">
+          {/* Header with Tabs */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <TabsList className="bg-muted/50 p-1 h-auto">
               <TabsTrigger
                 value="dashboard"
-                className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                className="px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
                 Dashboard
                 {priorityContacts.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 rounded-full h-5 min-w-5 px-1.5">
+                  <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5 text-xs">
                     {priorityContacts.length}
                   </Badge>
                 )}
               </TabsTrigger>
               <TabsTrigger
                 value="directory"
-                className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                className="px-4 py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
               >
                 <LayoutGrid className="h-4 w-4 mr-2" />
                 Directory
-                <Badge variant="outline" className="ml-2 rounded-full h-5 min-w-5 px-1.5">
+                <Badge variant="outline" className="ml-2 h-5 min-w-5 px-1.5 text-xs">
                   {contacts.length}
                 </Badge>
               </TabsTrigger>
             </TabsList>
 
             <Button
-              variant="default"
               onClick={() => {
                 setEditingContact(null);
                 setShowTagModal(true);
               }}
-              className="gap-2 rounded-full shadow-sm"
+              className="gap-2"
             >
               <UserPlus className="h-4 w-4" />
               Add Contact
@@ -354,159 +340,187 @@ const ContactsPage = () => {
           </div>
 
           {/* Dashboard Tab */}
-          <TabsContent value="dashboard" className="space-y-6">
-            {/* Quick Stats */}
+          <TabsContent value="dashboard" className="space-y-6 mt-0">
+            {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="rounded-2xl border border-border bg-card p-6"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Total Contacts</p>
-                    <p className="text-3xl font-bold">{contacts.length}</p>
-                  </div>
-                  <Users className="h-5 w-5 text-muted-foreground" />
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="rounded-2xl border border-border bg-card p-6"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">New This Week</p>
-                    <p className="text-3xl font-bold">{newContactsThisWeek}</p>
-                  </div>
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="rounded-2xl border border-border bg-card p-6"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Due Today</p>
-                    <p className="text-3xl font-bold">{followUpsDueToday}</p>
-                  </div>
-                  <Clock className="h-5 w-5 text-blue-500" />
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-                className="rounded-2xl border border-border bg-card p-6"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Overdue</p>
-                    <p className="text-3xl font-bold">{overdueCount}</p>
-                  </div>
-                  <AlertCircle className="h-5 w-5 text-red-500" />
-                </div>
-              </motion.div>
+              {[
+                { label: "Total Contacts", value: contacts.length, icon: Users, color: "text-foreground" },
+                { label: "New This Week", value: newContactsThisWeek, icon: TrendingUp, color: "text-green-500" },
+                { label: "Due Today", value: followUpsDueToday, icon: Clock, color: "text-blue-500" },
+                { label: "Overdue", value: overdueCount, icon: AlertCircle, color: "text-destructive" },
+              ].map((stat, index) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Card className="p-5 border-border/50 hover:border-border transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">{stat.label}</p>
+                        <p className={`text-3xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
+                      </div>
+                      <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
             </div>
 
-            {/* Main Dashboard Content */}
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Priority Follow-ups */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                className="rounded-2xl border border-border bg-card"
-              >
-                <div className="p-6 border-b border-border">
+            {/* Main Content Grid */}
+            <div className="grid gap-6 lg:grid-cols-3">
+              {/* Priority Contacts */}
+              <Card className="lg:col-span-2 border-border/50">
+                <div className="p-5 border-b border-border/50">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold">Priority Follow-ups</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Contacts needing your attention
-                      </p>
+                      <h3 className="font-semibold">Priority Follow-ups</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">Contacts needing attention</p>
                     </div>
                     {priorityContacts.length > 0 && (
-                      <Badge variant="secondary" className="rounded-full">
-                        {priorityContacts.length}
-                      </Badge>
+                      <Badge variant="secondary">{priorityContacts.length}</Badge>
                     )}
                   </div>
                 </div>
                 <ScrollArea className="h-[400px]">
-                  <div className="p-6">
+                  <div className="p-5 space-y-3">
                     {priorityContacts.length > 0 ? (
-                      <ContactsPriorityQueue contacts={priorityContacts.slice(0, 8)} />
+                      priorityContacts.slice(0, 8).map((contact) => {
+                        const isOverdue = contact.followUpDueDate && new Date(contact.followUpDueDate) < new Date();
+                        return (
+                          <motion.div
+                            key={contact.id}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="flex items-center gap-4 p-3 rounded-lg border border-border/50 hover:border-border hover:bg-muted/30 transition-all cursor-pointer group"
+                            onClick={() => navigate(`/contacts/${contact.id}`)}
+                          >
+                            <Avatar className={`h-10 w-10 ${getAvatarColor(contact.contactName)}`}>
+                              <AvatarFallback className="text-white text-sm">
+                                {getInitials(contact.contactName)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">{contact.contactName}</p>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {contact.company || contact.event}
+                              </p>
+                            </div>
+                            <Badge variant={isOverdue ? "destructive" : "secondary"} className="shrink-0">
+                              {isOverdue ? "Overdue" : "Due Soon"}
+                            </Badge>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </motion.div>
+                        );
+                      })
                     ) : (
                       <div className="flex flex-col items-center justify-center py-12 text-center">
                         <div className="rounded-full bg-muted p-4 mb-4">
                           <Sparkles className="h-6 w-6 text-muted-foreground" />
                         </div>
-                        <p className="text-sm font-medium mb-1">All caught up!</p>
-                        <p className="text-sm text-muted-foreground">
-                          No urgent follow-ups at the moment
-                        </p>
+                        <p className="font-medium">All caught up!</p>
+                        <p className="text-sm text-muted-foreground mt-1">No urgent follow-ups</p>
                       </div>
                     )}
                   </div>
                 </ScrollArea>
-              </motion.div>
+              </Card>
 
-              {/* Network Insights */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.35 }}
-                className="rounded-2xl border border-border bg-card"
-              >
-                <div className="p-6 border-b border-border">
-                  <h3 className="text-lg font-semibold">Network Insights</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Understand your networking patterns
-                  </p>
-                </div>
-                <div className="p-6">
-                  <ContactsInsights contacts={contacts} />
-                </div>
-              </motion.div>
+              {/* Quick Stats Sidebar */}
+              <div className="space-y-6">
+                {/* Events Breakdown */}
+                <Card className="border-border/50">
+                  <div className="p-5 border-b border-border/50">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold">By Event</h3>
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="p-5 space-y-4">
+                    {eventStats.length > 0 ? (
+                      eventStats.map(([event, count]) => (
+                        <div key={event} className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="truncate">{event}</span>
+                            <span className="text-muted-foreground">{count}</span>
+                          </div>
+                          <Progress value={(count / contacts.length) * 100} className="h-1.5" />
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">No events yet</p>
+                    )}
+                    {events.length > 5 && (
+                      <Button
+                        variant="ghost"
+                        className="w-full text-sm"
+                        onClick={() => {
+                          setActiveSection("directory");
+                        }}
+                      >
+                        View All Events
+                        <ArrowUpRight className="h-3 w-3 ml-1" />
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+
+                {/* Industries Breakdown */}
+                <Card className="border-border/50">
+                  <div className="p-5 border-b border-border/50">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold">By Industry</h3>
+                      <Briefcase className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="p-5 space-y-4">
+                    {industryStats.length > 0 ? (
+                      industryStats.map(([industry, count]) => (
+                        <div key={industry} className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="truncate">{industry}</span>
+                            <span className="text-muted-foreground">{count}</span>
+                          </div>
+                          <Progress value={(count / contacts.length) * 100} className="h-1.5" />
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">No industries yet</p>
+                    )}
+                  </div>
+                </Card>
+
+                {/* Follow-up Progress */}
+                <Card className="border-border/50">
+                  <div className="p-5">
+                    <h3 className="font-semibold mb-4">Follow-up Progress</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Completed</span>
+                        <span className="font-medium">{completedFollowUps}/{contacts.length}</span>
+                      </div>
+                      <Progress 
+                        value={contacts.length > 0 ? (completedFollowUps / contacts.length) * 100 : 0} 
+                        className="h-2" 
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {contacts.length > 0 
+                          ? `${Math.round((completedFollowUps / contacts.length) * 100)}% of contacts followed up`
+                          : "Add contacts to track follow-ups"
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
             </div>
-
-            {/* Contacts by Event */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="rounded-2xl border border-border bg-card"
-            >
-              <div className="p-6 border-b border-border">
-                <h3 className="text-lg font-semibold">Contacts by Event</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  See where you're building connections
-                </p>
-              </div>
-              <div className="p-6">
-                <ContactsByEvent contacts={contacts} />
-              </div>
-            </motion.div>
           </TabsContent>
 
           {/* Directory Tab */}
-          <TabsContent value="directory" className="space-y-6">
+          <TabsContent value="directory" className="space-y-6 mt-0">
             {/* Search and Filters */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-border bg-card p-6 space-y-4"
-            >
+            <Card className="p-5 border-border/50">
               <div className="flex flex-col lg:flex-row gap-4">
                 <div className="flex-1">
                   <ContactSearchBar value={searchQuery} onChange={setSearchQuery} />
@@ -516,7 +530,7 @@ const ContactsPage = () => {
                     size="sm"
                     variant="outline"
                     onClick={() => setFiltersOpen(true)}
-                    className="gap-2 rounded-full"
+                    className="gap-2"
                   >
                     <Filter className="h-4 w-4" />
                     Filters
@@ -530,118 +544,82 @@ const ContactsPage = () => {
                         setSelectedIndustry("all");
                         setSearchQuery("");
                       }}
-                      className="rounded-full"
                     >
                       Clear
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleExportCSV}
-                    className="gap-2 rounded-full"
-                  >
+                  <Button size="sm" variant="outline" onClick={handleExportCSV} className="gap-2">
                     <Download className="h-4 w-4" />
                     Export
                   </Button>
                 </div>
               </div>
 
-              {/* Quick Filters */}
-              {(quickEventFilters.length > 0 || quickIndustryFilters.length > 0) && (
-                <div className="flex flex-wrap gap-2">
-                  {quickEventFilters.map((event) => (
+              {/* Quick Event Filters */}
+              {events.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border/50">
+                  {events.slice(0, 6).map((event) => (
                     <Button
-                      key={`event-${event}`}
+                      key={event}
                       size="sm"
                       variant={selectedEvent === event ? "secondary" : "outline"}
-                      onClick={() => toggleEventFilter(event)}
-                      className="rounded-full text-xs"
+                      onClick={() => setSelectedEvent(prev => prev === event ? "all" : event)}
+                      className="text-xs h-7"
                     >
                       {event}
                     </Button>
                   ))}
-                  {quickIndustryFilters.map((industry) => (
-                    <Button
-                      key={`industry-${industry}`}
-                      size="sm"
-                      variant={selectedIndustry === industry ? "secondary" : "outline"}
-                      onClick={() => toggleIndustryFilter(industry)}
-                      className="rounded-full text-xs"
-                    >
-                      {industry}
-                    </Button>
-                  ))}
                 </div>
               )}
-            </motion.div>
+            </Card>
 
-            {/* Bulk Actions Bar */}
+            {/* Bulk Actions */}
             <AnimatePresence>
               {selectedContacts.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="rounded-2xl border border-accent bg-accent/10 p-4"
                 >
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        checked={selectedContacts.length === filteredContacts.length}
-                        onCheckedChange={handleSelectAll}
-                        className="border-accent"
-                      />
-                      <span className="text-sm font-medium">
-                        {selectedContacts.length} selected
-                      </span>
+                  <Card className="p-4 border-accent bg-accent/5">
+                    <div className="flex flex-wrap items-center gap-4">
+                      <div className="flex items-center gap-3">
+                        <Checkbox
+                          checked={selectedContacts.length === filteredContacts.length}
+                          onCheckedChange={handleSelectAll}
+                        />
+                        <span className="text-sm font-medium">{selectedContacts.length} selected</span>
+                      </div>
+                      <div className="ml-auto flex gap-2">
+                        <Button onClick={handleExportSelectedVCards} variant="outline" size="sm" className="gap-2">
+                          <Download className="h-4 w-4" />
+                          Export
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setShowDeleteDialog(true)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </div>
-                    <div className="ml-auto flex gap-2">
-                      <Button
-                        onClick={handleExportSelectedVCards}
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 rounded-full"
-                      >
-                        <Download className="h-4 w-4" />
-                        Export
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => setShowDeleteDialog(true)}
-                        className="gap-2 rounded-full"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
+                  </Card>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* Contacts Grid */}
             {filteredContacts.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <EmptyState
                   icon={<Users className="h-12 w-12 text-muted-foreground" />}
-                  title={
-                    searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
-                      ? "No contacts found"
-                      : "Your network is empty"
-                  }
-                  description={
-                    searchQuery || selectedEvent !== "all" || selectedIndustry !== "all"
-                      ? "Try adjusting your search or filters."
-                      : "Start building meaningful connections today."
-                  }
+                  title={searchQuery || selectedEvent !== "all" || selectedIndustry !== "all" ? "No contacts found" : "Your network is empty"}
+                  description={searchQuery || selectedEvent !== "all" || selectedIndustry !== "all" ? "Try adjusting your search or filters." : "Start building meaningful connections today."}
                   action={
                     <div className="flex gap-2">
                       {!searchQuery && selectedEvent === "all" && selectedIndustry === "all" && (
-                        <Button onClick={() => navigate("/")} className="gap-2 rounded-full">
+                        <Button onClick={() => navigate("/")} className="gap-2">
                           <QrCode className="h-4 w-4" />
                           Go to Profile
                         </Button>
@@ -652,7 +630,7 @@ const ContactsPage = () => {
                           setEditingContact(null);
                           setShowTagModal(true);
                         }}
-                        className="gap-2 rounded-full"
+                        className="gap-2"
                       >
                         <UserPlus className="h-4 w-4" />
                         Add Contact
@@ -662,17 +640,13 @@ const ContactsPage = () => {
                 />
               </motion.div>
             ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-              >
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredContacts.map((contact, index) => (
                   <motion.div
                     key={contact.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
+                    transition={{ delay: index * 0.03 }}
                     className="relative"
                   >
                     {selectedContacts.length > 0 && (
@@ -681,7 +655,6 @@ const ContactsPage = () => {
                           <Checkbox
                             checked={selectedContacts.includes(contact.id)}
                             onCheckedChange={() => handleSelectContact(contact.id)}
-                            className="border-accent data-[state=checked]:bg-accent"
                           />
                         </div>
                       </div>
@@ -695,7 +668,7 @@ const ContactsPage = () => {
                     />
                   </motion.div>
                 ))}
-              </motion.div>
+              </div>
             )}
           </TabsContent>
         </Tabs>
@@ -731,7 +704,7 @@ const ContactsPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Adaptive Navigation */}
+      {/* Navigation */}
       {dockVisible && (
         isMobile ? (
           <MobileTabBar items={dockItems} />
@@ -743,19 +716,13 @@ const ContactsPage = () => {
             className="fixed bottom-4 left-0 right-0 z-50 pointer-events-none"
           >
             <div className="pointer-events-auto">
-              <Dock
-                items={dockItems}
-                activeItem={location.pathname}
-                panelHeight={68}
-                baseItemSize={50}
-                magnification={70}
-              />
+              <Dock items={dockItems} activeItem={location.pathname} panelHeight={68} baseItemSize={50} magnification={70} />
             </div>
           </motion.div>
         )
       )}
 
-      {/* Dock Visibility Toggle */}
+      {/* Dock Toggle */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -768,11 +735,7 @@ const ContactsPage = () => {
           onClick={() => setDockVisible(!dockVisible)}
           className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background"
         >
-          {dockVisible ? (
-            <EyeOff className="h-4 w-4" />
-          ) : (
-            <Eye className="h-4 w-4" />
-          )}
+          {dockVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </Button>
       </motion.div>
 
@@ -785,9 +748,7 @@ const ContactsPage = () => {
         }}
         profileCardId=""
         editContact={editingContact}
-        onSuccess={() => {
-          setEditingContact(null);
-        }}
+        onSuccess={() => setEditingContact(null)}
       />
 
       {/* Delete Confirmation Dialog */}

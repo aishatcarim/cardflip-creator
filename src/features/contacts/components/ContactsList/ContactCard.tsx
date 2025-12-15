@@ -3,7 +3,8 @@ import { NetworkContact } from "@contacts/store/networkContactsStore";
 import { Card } from "@shared/ui/card";
 import { Button } from "@shared/ui/button";
 import { Badge } from "@shared/ui/badge";
-import { Edit, Trash2, Download, Flame, Clock, Sparkles, Sparkles as AIFollowUp, Mail, Linkedin } from "lucide-react";
+import { Avatar, AvatarFallback } from "@shared/ui/avatar";
+import { Edit, Trash2, Download, Clock, Sparkles, Mail, Building2, Briefcase, Calendar } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   AlertDialog,
@@ -26,37 +27,32 @@ interface ContactCardProps {
   onExport: (id: string) => void;
 }
 
-// Generate consistent color from event name
-const getEventColor = (event: string) => {
-  const colors = [
-    "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
-    "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800",
-    "bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800",
-    "bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-800",
-    "bg-pink-50 border-pink-200 dark:bg-pink-950/30 dark:border-pink-800",
-    "bg-cyan-50 border-cyan-200 dark:bg-cyan-950/30 dark:border-cyan-800",
-  ];
-  
-  let hash = 0;
-  for (let i = 0; i < event.length; i++) {
-    hash = event.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
+// Get initials from name
+const getInitials = (name: string) => {
+  return name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 };
 
-const getEventTextColor = (event: string) => {
+// Generate consistent color from name
+const getAvatarColor = (name: string) => {
   const colors = [
-    "text-blue-700 dark:text-blue-300",
-    "text-green-700 dark:text-green-300",
-    "text-purple-700 dark:text-purple-300",
-    "text-orange-700 dark:text-orange-300",
-    "text-pink-700 dark:text-pink-300",
-    "text-cyan-700 dark:text-cyan-300",
+    "bg-blue-500",
+    "bg-green-500",
+    "bg-purple-500",
+    "bg-orange-500",
+    "bg-pink-500",
+    "bg-cyan-500",
+    "bg-indigo-500",
+    "bg-teal-500",
   ];
   
   let hash = 0;
-  for (let i = 0; i < event.length; i++) {
-    hash = event.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
 };
@@ -68,14 +64,14 @@ const getUrgencyIndicator = (contact: NetworkContact) => {
 
   if (isOverdue) {
     return {
-      icon: <Flame className="h-3 w-3" />,
+      icon: <Clock className="h-3 w-3" />,
       label: "Overdue",
       variant: "destructive" as const
     };
   }
 
   const daysUntil = getDaysUntil(contact.followUpDueDate);
-  if (daysUntil <= 3) {
+  if (daysUntil <= 3 && daysUntil >= 0) {
     return {
       icon: <Clock className="h-3 w-3" />,
       label: "Due Soon",
@@ -113,10 +109,9 @@ export const ContactCard = ({ contact, index, onEdit, onDelete, onExport }: Cont
   const navigate = useNavigate();
 
   const urgency = getUrgencyIndicator(contact);
-  const daysSince = getDaysSince(contact.taggedAt);
+  const eventTags = contact.eventTags || [contact.event];
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't navigate if clicking on buttons
     if ((e.target as HTMLElement).closest('button')) {
       return;
     }
@@ -128,72 +123,105 @@ export const ContactCard = ({ contact, index, onEdit, onDelete, onExport }: Cont
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.05, duration: 0.3 }}
+        transition={{ delay: index * 0.03, duration: 0.2 }}
       >
         <Card
-          className={`p-4 h-full hover:shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer ${getEventColor(
-            contact.event
-          )}`}
+          className="group relative overflow-hidden border border-border/50 bg-card hover:border-border hover:shadow-lg transition-all duration-300 cursor-pointer"
           onClick={handleCardClick}
         >
-          <div className="space-y-3">
-            {/* Header with Status Badge */}
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h3 className="font-bold text-lg text-foreground truncate">
-                  {contact.contactName}
-                </h3>
-                <p className="text-sm text-muted-foreground truncate">
-                  {contact.company}
-                </p>
+          {/* Status indicator line */}
+          {urgency && (
+            <div className={`absolute top-0 left-0 right-0 h-1 ${
+              urgency.variant === 'destructive' ? 'bg-destructive' :
+              urgency.variant === 'secondary' ? 'bg-amber-500' : 'bg-primary'
+            }`} />
+          )}
+
+          <div className="p-5 space-y-4">
+            {/* Header */}
+            <div className="flex items-start gap-4">
+              <Avatar className={`h-12 w-12 ${getAvatarColor(contact.contactName)}`}>
+                <AvatarFallback className="text-white font-semibold">
+                  {getInitials(contact.contactName)}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-foreground truncate">
+                      {contact.contactName}
+                    </h3>
+                    {contact.title && (
+                      <p className="text-sm text-muted-foreground truncate">
+                        {contact.title}
+                      </p>
+                    )}
+                  </div>
+                  {urgency && (
+                    <Badge variant={urgency.variant} className="gap-1 shrink-0">
+                      {urgency.icon}
+                      <span className="hidden sm:inline">{urgency.label}</span>
+                    </Badge>
+                  )}
+                </div>
               </div>
-              {urgency && (
-                <Badge variant={urgency.variant} className="gap-1">
-                  {urgency.icon}
-                  {urgency.label}
-                </Badge>
+            </div>
+
+            {/* Details */}
+            <div className="space-y-2">
+              {contact.company && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Building2 className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{contact.company}</span>
+                </div>
+              )}
+              
+              {contact.industry && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Briefcase className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{contact.industry}</span>
+                </div>
               )}
             </div>
 
-            {/* Event Badge */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className={`text-xs px-2 py-1 rounded-full font-medium ${getEventTextColor(
-                  contact.event
-                )} bg-background/50`}
-              >
-                📅 {contact.event}
-              </span>
+            {/* Event Tags */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Calendar className="h-3.5 w-3.5" />
+                <span>Events</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {eventTags.slice(0, 3).map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="outline"
+                    className="text-xs font-normal bg-muted/50"
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+                {eventTags.length > 3 && (
+                  <Badge variant="outline" className="text-xs font-normal">
+                    +{eventTags.length - 3}
+                  </Badge>
+                )}
+              </div>
             </div>
-
-            {/* Industry */}
-            {contact.industry && (
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <span>💼</span>
-                {contact.industry}
-              </p>
-            )}
-
-            {/* Company */}
-            {contact.company && (
-              <p className="text-sm text-muted-foreground">
-                🏢 {contact.company}
-              </p>
-            )}
 
             {/* Interests */}
             {contact.interests.length > 0 && (
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1.5">
                 {contact.interests.slice(0, 3).map((interest) => (
                   <span
                     key={interest}
-                    className="text-xs px-2 py-0.5 rounded bg-background/60 text-muted-foreground"
+                    className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary"
                   >
                     {interest}
                   </span>
                 ))}
                 {contact.interests.length > 3 && (
-                  <span className="text-xs px-2 py-0.5 rounded bg-background/60 text-muted-foreground">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                     +{contact.interests.length - 3}
                   </span>
                 )}
@@ -202,89 +230,65 @@ export const ContactCard = ({ contact, index, onEdit, onDelete, onExport }: Cont
 
             {/* Notes Preview */}
             {contact.notes && (
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {contact.notes}
+              <p className="text-sm text-muted-foreground line-clamp-2 italic">
+                "{contact.notes}"
               </p>
             )}
 
-            {/* Context & Date */}
-            <div className="text-xs text-muted-foreground">
-              <p>{contact.event} • {daysSince} days ago</p>
-              {contact.notes && (
-                <p className="line-clamp-2 mt-1 italic">
-                  "{contact.notes.substring(0, 60)}{contact.notes.length > 60 ? '...' : ''}"
-                </p>
-              )}
-            </div>
-
-            {/* Quick Actions */}
-            <div className="flex items-center gap-2 pt-3 border-t border-border/50">
-              <Button
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/contacts/${contact.id}?action=ai-followup`);
-                }}
-                className="gap-1 flex-1"
-              >
-                <AIFollowUp className="h-3 w-3" />
-                AI Follow-Up
-              </Button>
-
-              {contact.email && (
+            {/* Footer */}
+            <div className="flex items-center justify-between pt-3 border-t border-border/50">
+              <span className="text-xs text-muted-foreground">
+                Added {formatDistanceToNow(new Date(contact.taggedAt), { addSuffix: true })}
+              </span>
+              
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {contact.email && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.location.href = `mailto:${contact.email}`;
+                    }}
+                  >
+                    <Mail className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
                   onClick={(e) => {
                     e.stopPropagation();
-                    window.location.href = `mailto:${contact.email}`;
+                    onEdit(contact);
                   }}
-                  className="gap-1"
                 >
-                  <Mail className="h-3 w-3" />
+                  <Edit className="h-4 w-4" />
                 </Button>
-              )}
-
-            </div>
-
-            {/* Secondary Actions */}
-            <div className="flex items-center gap-1 pt-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(contact);
-                }}
-                className="flex-1"
-              >
-                <Edit className="h-3 w-3 mr-1" />
-                Edit
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onExport(contact.id);
-                }}
-                className="flex-1"
-              >
-                <Download className="h-3 w-3 mr-1" />
-                Export
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDeleteDialog(true);
-                }}
-                className="flex-1 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-3 w-3 mr-1" />
-                Delete
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onExport(contact.id);
+                  }}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteDialog(true);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </Card>

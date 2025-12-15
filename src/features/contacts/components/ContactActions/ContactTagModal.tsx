@@ -4,12 +4,13 @@ import { Input } from "@shared/ui/input";
 import { Label } from "@shared/ui/label";
 import { Textarea } from "@shared/ui/textarea";
 import { Button } from "@shared/ui/button";
+import { Badge } from "@shared/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/ui/select";
 import { useNetworkContactsStore } from "@contacts/store/networkContactsStore";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, X, Plus, Calendar } from "lucide-react";
 
 interface ContactTagModalProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface ContactTagModalProps {
     id: string;
     contactName: string;
     event: string;
+    eventTags: string[];
     industry: string;
     interests: string[];
     notes: string;
@@ -70,8 +72,15 @@ export const ContactTagModal = ({
   onSuccess,
   editContact,
 }: ContactTagModalProps) => {
-  const { addContact, updateContact, settings } = useNetworkContactsStore();
+  const { addContact, updateContact, settings, contacts } = useNetworkContactsStore();
   const [showSuccess, setShowSuccess] = useState(false);
+  const [newEventTag, setNewEventTag] = useState("");
+
+  // Get existing events for suggestions
+  const existingEvents = useMemo(() => 
+    [...new Set(contacts.flatMap(c => c.eventTags || [c.event]))].sort(),
+    [contacts]
+  );
 
   const [quickTag, setQuickTag] = useState({
     contactName: "",
@@ -82,6 +91,7 @@ export const ContactTagModal = ({
   const [fullTag, setFullTag] = useState({
     contactName: "",
     event: defaultEvent || settings.defaultEvent || "",
+    eventTags: [] as string[],
     industry: "",
     interests: [] as string[],
     email: "",
@@ -94,6 +104,24 @@ export const ContactTagModal = ({
     settings.defaultToQuickTag ? "quick" : "full"
   );
 
+  const addEventTag = (tag: string) => {
+    const trimmed = tag.trim();
+    if (trimmed && !fullTag.eventTags.includes(trimmed)) {
+      setFullTag(prev => ({
+        ...prev,
+        eventTags: [...prev.eventTags, trimmed]
+      }));
+    }
+    setNewEventTag("");
+  };
+
+  const removeEventTag = (tag: string) => {
+    setFullTag(prev => ({
+      ...prev,
+      eventTags: prev.eventTags.filter(t => t !== tag)
+    }));
+  };
+
   // Load edit data if provided
   useEffect(() => {
     if (editContact) {
@@ -105,6 +133,7 @@ export const ContactTagModal = ({
       setFullTag({
         contactName: editContact.contactName,
         event: editContact.event,
+        eventTags: editContact.eventTags || [],
         industry: editContact.industry,
         interests: editContact.interests,
         email: editContact.email || "",
@@ -169,6 +198,7 @@ export const ContactTagModal = ({
         profileCardId,
         contactName: quickTag.contactName.trim(),
         event: quickTag.event.trim(),
+        eventTags: [quickTag.event.trim()],
         industry: "",
         interests: [],
         notes: quickTag.notes.trim(),
@@ -224,6 +254,7 @@ export const ContactTagModal = ({
         profileCardId,
         contactName: fullTag.contactName.trim(),
         event: fullTag.event.trim(),
+        eventTags: fullTag.eventTags.length > 0 ? fullTag.eventTags : [fullTag.event.trim()],
         industry: fullTag.industry,
         interests: fullTag.interests,
         email: fullTag.email.trim() || undefined,
@@ -253,6 +284,7 @@ export const ContactTagModal = ({
     setFullTag({
       contactName: "",
       event: defaultEvent || settings.defaultEvent || "",
+      eventTags: [],
       industry: "",
       interests: [],
       email: "",
@@ -393,7 +425,7 @@ export const ContactTagModal = ({
 
                 <div className="space-y-2">
                   <Label htmlFor="full-event">
-                    Event/Occasion <span className="text-destructive">*</span>
+                    Primary Event <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="full-event"
@@ -404,6 +436,85 @@ export const ContactTagModal = ({
                     placeholder="Tech Conference 2025"
                     maxLength={100}
                   />
+                </div>
+
+                {/* Event Tags Section */}
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Event Tags
+                    <span className="text-xs text-muted-foreground">(Optional - associate with multiple events)</span>
+                  </Label>
+                  
+                  {/* Display current tags */}
+                  {fullTag.eventTags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {fullTag.eventTags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="gap-1 pr-1"
+                        >
+                          {tag}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-4 w-4 p-0 hover:bg-transparent"
+                            onClick={() => removeEventTag(tag)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add new tag input */}
+                  <div className="flex gap-2">
+                    <Input
+                      value={newEventTag}
+                      onChange={(e) => setNewEventTag(e.target.value)}
+                      placeholder="Add event tag..."
+                      maxLength={100}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addEventTag(newEventTag);
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => addEventTag(newEventTag)}
+                      disabled={!newEventTag.trim()}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {/* Existing events suggestions */}
+                  {existingEvents.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {existingEvents
+                        .filter(e => !fullTag.eventTags.includes(e))
+                        .slice(0, 5)
+                        .map((event) => (
+                          <Button
+                            key={event}
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs h-6 px-2"
+                            onClick={() => addEventTag(event)}
+                          >
+                            + {event}
+                          </Button>
+                        ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
