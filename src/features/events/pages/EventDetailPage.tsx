@@ -6,6 +6,7 @@ import { Progress } from '@shared/ui/progress';
 import { Checkbox } from '@shared/ui/checkbox';
 import { Input } from '@shared/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
+import { ScrollArea } from '@shared/ui/scroll-area';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -20,13 +21,22 @@ import {
   TrendingUp,
   MessageSquare,
   Send,
-  BarChart3
+  ImageIcon,
+  Upload,
+  X,
+  Mail,
+  Phone,
+  Building2,
+  Briefcase,
+  Clock,
+  MoreHorizontal,
+  ExternalLink
 } from 'lucide-react';
 import { useEventsStore } from '../store/eventsStore';
 import { useNetworkContactsStore } from '@contacts/store/networkContactsStore';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { ViewCardModal } from '@profile/components/SavedCards/ViewCardModal';
 import { toast } from 'sonner';
 import { useSavedCardsStore } from '@profile/store/savedCardsStore';
@@ -48,36 +58,47 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@shared/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@shared/ui/dropdown-menu";
+import defaultBanner from '@/assets/event-banners/conference-default.jpg';
 
 interface EventGoal {
   id: string;
   title: string;
   completed: boolean;
   category: 'preparation' | 'networking' | 'followup';
+  priority?: 'low' | 'medium' | 'high';
 }
 
 const EventDetailPage = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { getEventById, deleteEvent } = useEventsStore();
+  const { getEventById, deleteEvent, updateEvent } = useEventsStore();
   const { contacts } = useNetworkContactsStore();
   const { savedCards } = useSavedCardsStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showGoalsDialog, setShowGoalsDialog] = useState(false);
-  const [newGoalTitle, setNewGoalTitle] = useState('');
+  const [showDeleteBannerDialog, setShowDeleteBannerDialog] = useState(false);
+  const [showEditBannerDialog, setShowEditBannerDialog] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'contacts' | 'goals'>('overview');
+  const [newBannerPreview, setNewBannerPreview] = useState<string | null>(null);
+  const [selectedGoalCategory, setSelectedGoalCategory] = useState<'preparation' | 'networking' | 'followup'>('preparation');
 
   // Mock goals state - in real app, this would come from store
   const [eventGoals, setEventGoals] = useState<EventGoal[]>([
-    { id: '1', title: 'Prepare business cards (50 cards)', completed: true, category: 'preparation' },
-    { id: '2', title: 'Research attending companies', completed: true, category: 'preparation' },
-    { id: '3', title: 'Set networking goal: Connect with 15 people', completed: false, category: 'networking' },
-    { id: '4', title: 'Identify 3 potential collaborators', completed: false, category: 'networking' },
-    { id: '5', title: 'Schedule follow-up calls within 48 hours', completed: false, category: 'followup' },
-    { id: '6', title: 'Send personalized thank you emails', completed: false, category: 'followup' },
+    { id: '1', title: 'Prepare business cards (50 cards)', completed: true, category: 'preparation', priority: 'high' },
+    { id: '2', title: 'Research attending companies', completed: true, category: 'preparation', priority: 'medium' },
+    { id: '3', title: 'Set networking goal: Connect with 15 people', completed: false, category: 'networking', priority: 'high' },
+    { id: '4', title: 'Identify 3 potential collaborators', completed: false, category: 'networking', priority: 'medium' },
+    { id: '5', title: 'Schedule follow-up calls within 48 hours', completed: false, category: 'followup', priority: 'high' },
+    { id: '6', title: 'Send personalized thank you emails', completed: false, category: 'followup', priority: 'medium' },
   ]);
 
   const locationEvent = location.state?.event;
@@ -159,18 +180,18 @@ const EventDetailPage = () => {
     );
   };
 
-  const addGoal = (category: 'preparation' | 'networking' | 'followup') => {
-    if (!newGoalTitle.trim()) return;
+  const addGoal = (title: string, category: 'preparation' | 'networking' | 'followup', priority: 'low' | 'medium' | 'high' = 'medium') => {
+    if (!title.trim()) return;
     
     const newGoal: EventGoal = {
       id: Date.now().toString(),
-      title: newGoalTitle,
+      title,
       completed: false,
       category,
+      priority,
     };
     
     setEventGoals(prev => [...prev, newGoal]);
-    setNewGoalTitle('');
     toast.success('Goal added successfully!');
   };
 
@@ -179,151 +200,197 @@ const EventDetailPage = () => {
     toast.success('Goal removed');
   };
 
+  const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewBannerPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveBanner = () => {
+    if (newBannerPreview) {
+      updateEvent(event.id, { imageUrl: newBannerPreview });
+      toast.success('Banner updated successfully!');
+      setShowEditBannerDialog(false);
+      setNewBannerPreview(null);
+    }
+  };
+
+  const handleDeleteBanner = () => {
+    updateEvent(event.id, { imageUrl: undefined });
+    toast.success('Banner removed');
+    setShowDeleteBannerDialog(false);
+  };
+
   const selectedContact = eventContacts.find(c => c.id === selectedContactId);
   const selectedCard = selectedContact ? savedCards.find(card => card.id === selectedContact.profileCardId) : null;
+
+  const bannerImage = event.imageUrl || defaultBanner;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader />
       
       <main className="flex-1">
-        {/* Hero Banner */}
-        <div className="relative h-64 sm:h-80 lg:h-96 w-full overflow-hidden">
-          {event.imageUrl ? (
-            <img
-              src={event.imageUrl}
-              alt={event.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-violet-500 to-purple-600" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        {/* Professional Banner Section */}
+        <div className="relative h-48 sm:h-56 lg:h-64 w-full overflow-hidden group">
+          <img
+            src={bannerImage}
+            alt={event.name}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
           
           {/* Back Button */}
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
             onClick={() => navigate('/events')}
-            className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm rounded-full shadow-lg"
+            className="absolute top-4 left-4 bg-background/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-background"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
 
-          {/* Action Buttons */}
-          <div className="absolute top-4 right-4 flex gap-2">
+          {/* Banner Actions */}
+          <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
-              variant="outline"
-              size="icon"
-              className="bg-background/90 backdrop-blur-sm rounded-full shadow-lg"
-              onClick={() => toast.info('Edit functionality coming soon')}
+              variant="secondary"
+              size="sm"
+              className="gap-2 bg-background/90 backdrop-blur-sm shadow-lg"
+              onClick={() => setShowEditBannerDialog(true)}
             >
-              <Edit className="h-4 w-4" />
+              <ImageIcon className="h-3.5 w-3.5" />
+              Edit Banner
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="bg-background/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-destructive hover:text-destructive-foreground"
-              onClick={() => setShowDeleteDialog(true)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {event.imageUrl && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="gap-2 bg-background/90 backdrop-blur-sm shadow-lg hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => setShowDeleteBannerDialog(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
 
-          {/* Event Title Overlay */}
-          <div className="absolute bottom-20 left-8 right-4">
-            <h1 className="text-4xl font-bold text-white drop-shadow-lg mb-2">
-              {event.name}
-            </h1>
+          {/* Event Info Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 pb-4">
+            <div className="container mx-auto max-w-7xl">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-xs">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      {format(new Date(event.date), 'MMM d, yyyy')}
+                    </Badge>
+                    {event.location && (
+                      <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-xs">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        {event.location}
+                      </Badge>
+                    )}
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+                    {event.name}
+                  </h1>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="bg-background/80 backdrop-blur-sm rounded-full shadow-lg"
+                    onClick={() => toast.info('Edit functionality coming soon')}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="bg-background/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="container mx-auto px-4 -mt-12 relative z-10 pb-20 max-w-7xl">
-          {/* Quick Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="rounded-2xl border border-border bg-card p-6 shadow-lg"
-            >
-              <div className="flex items-start justify-between mb-2">
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
+          {/* Quick Stats Row */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Contacts</p>
-                  <p className="text-3xl font-bold">{eventContacts.length}</p>
+                  <p className="text-xs text-muted-foreground mb-0.5">Contacts</p>
+                  <p className="text-2xl font-bold">{eventContacts.length}</p>
                 </div>
-                <Users className="h-5 w-5 text-blue-500" />
+                <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-blue-500" />
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Collected at event
-              </p>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="rounded-2xl border border-border bg-card p-6 shadow-lg"
-            >
-              <div className="flex items-start justify-between mb-2">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Goals</p>
-                  <p className="text-3xl font-bold">{goalStats.completed}/{goalStats.total}</p>
+                  <p className="text-xs text-muted-foreground mb-0.5">Goals</p>
+                  <p className="text-2xl font-bold">{goalStats.completed}<span className="text-sm text-muted-foreground font-normal">/{goalStats.total}</span></p>
                 </div>
-                <Target className="h-5 w-5 text-green-500" />
+                <div className="h-9 w-9 rounded-lg bg-green-500/10 flex items-center justify-center">
+                  <Target className="h-4 w-4 text-green-500" />
+                </div>
               </div>
-              <Progress value={goalStats.progress} className="h-1.5 mt-2" />
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="rounded-2xl border border-border bg-card p-6 shadow-lg"
-            >
-              <div className="flex items-start justify-between mb-2">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Event Date</p>
-                  <p className="text-lg font-bold">
-                    {format(new Date(event.date), 'MMM d, yyyy')}
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-0.5">Progress</p>
+                  <p className="text-2xl font-bold">{goalStats.progress}<span className="text-sm text-muted-foreground font-normal">%</span></p>
                 </div>
-                <Calendar className="h-5 w-5 text-purple-500" />
+                <div className="h-9 w-9 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-purple-500" />
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                {event.location || 'No location set'}
-              </p>
-            </motion.div>
+            </div>
           </div>
 
           {/* Main Content Tabs */}
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <TabsList className="bg-muted/50 p-1 rounded-full">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="space-y-6">
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <TabsList className="bg-transparent p-0 h-auto gap-6">
                 <TabsTrigger
                   value="overview"
-                  className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                  className="bg-transparent px-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                 >
                   <TrendingUp className="h-4 w-4 mr-2" />
                   Overview
                 </TabsTrigger>
                 <TabsTrigger
                   value="contacts"
-                  className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                  className="bg-transparent px-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                 >
                   <Users className="h-4 w-4 mr-2" />
                   Contacts
-                  <Badge variant="secondary" className="ml-2 rounded-full h-5 min-w-5 px-1.5">
+                  <Badge variant="secondary" className="ml-2 rounded-full h-5 min-w-5 px-1.5 text-xs">
                     {eventContacts.length}
                   </Badge>
                 </TabsTrigger>
                 <TabsTrigger
                   value="goals"
-                  className="rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                  className="bg-transparent px-0 pb-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
                 >
                   <Target className="h-4 w-4 mr-2" />
                   Goals
-                  <Badge variant="secondary" className="ml-2 rounded-full h-5 min-w-5 px-1.5">
+                  <Badge variant="secondary" className="ml-2 rounded-full h-5 min-w-5 px-1.5 text-xs">
                     {goalStats.completed}/{goalStats.total}
                   </Badge>
                 </TabsTrigger>
@@ -333,29 +400,33 @@ const EventDetailPage = () => {
                 onClick={handleExportContacts}
                 disabled={eventContacts.length === 0}
                 variant="outline"
-                className="gap-2 rounded-full"
+                size="sm"
+                className="gap-2"
               >
-                <Download className="h-4 w-4" />
+                <Download className="h-3.5 w-3.5" />
                 Export
               </Button>
             </div>
 
             {/* Overview Tab */}
-            <TabsContent value="overview" className="space-y-6">
+            <TabsContent value="overview" className="space-y-6 mt-0">
               <div className="grid gap-6 lg:grid-cols-2">
                 {/* Event Details */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-border bg-card p-6"
+                  className="rounded-xl border border-border bg-card"
                 >
-                  <h3 className="text-lg font-semibold mb-4">Event Details</h3>
-                  
-                  <div className="space-y-4">
+                  <div className="p-4 border-b border-border">
+                    <h3 className="font-semibold">Event Details</h3>
+                  </div>
+                  <div className="p-4 space-y-4">
                     <div className="flex items-start gap-3">
-                      <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                      </div>
                       <div>
-                        <p className="font-medium">Date & Time</p>
+                        <p className="text-sm font-medium">Date & Time</p>
                         <p className="text-sm text-muted-foreground">
                           {format(new Date(event.date), 'EEEE, MMMM d, yyyy')}
                         </p>
@@ -364,9 +435,11 @@ const EventDetailPage = () => {
 
                     {event.location && (
                       <div className="flex items-start gap-3">
-                        <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                        </div>
                         <div>
-                          <p className="font-medium">Location</p>
+                          <p className="text-sm font-medium">Location</p>
                           <p className="text-sm text-muted-foreground">{event.location}</p>
                         </div>
                       </div>
@@ -374,9 +447,11 @@ const EventDetailPage = () => {
 
                     {event.description && (
                       <div className="flex items-start gap-3">
-                        <MessageSquare className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                          <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                        </div>
                         <div>
-                          <p className="font-medium">Description</p>
+                          <p className="text-sm font-medium">Description</p>
                           <p className="text-sm text-muted-foreground">{event.description}</p>
                         </div>
                       </div>
@@ -384,26 +459,25 @@ const EventDetailPage = () => {
                   </div>
                 </motion.div>
 
-                {/* Quick Goal Overview */}
+                {/* Goal Progress */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="rounded-2xl border border-border bg-card p-6"
+                  className="rounded-xl border border-border bg-card"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Goal Progress</h3>
+                  <div className="p-4 border-b border-border flex items-center justify-between">
+                    <h3 className="font-semibold">Goal Progress</h3>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setActiveTab('goals')}
-                      className="gap-2 rounded-full"
+                      className="text-xs h-7"
                     >
                       View All
                     </Button>
                   </div>
-
-                  <div className="space-y-4">
+                  <div className="p-4 space-y-4">
                     {Object.entries(goalStats.byCategory).map(([category, goals]) => {
                       const completed = goals.filter(g => g.completed).length;
                       const total = goals.length;
@@ -411,23 +485,23 @@ const EventDetailPage = () => {
 
                       return (
                         <div key={category}>
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center justify-between mb-1.5">
                             <span className="text-sm font-medium capitalize">{category}</span>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-xs text-muted-foreground">
                               {completed}/{total}
                             </span>
                           </div>
-                          <Progress value={progress} className="h-2" />
+                          <Progress value={progress} className="h-1.5" />
                         </div>
                       );
                     })}
                   </div>
 
                   {goalStats.completed === goalStats.total && goalStats.total > 0 && (
-                    <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="mx-4 mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
                       <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                         <CheckCircle2 className="h-4 w-4" />
-                        <span className="text-sm font-medium">All goals completed! 🎉</span>
+                        <span className="text-sm font-medium">All goals completed!</span>
                       </div>
                     </div>
                   )}
@@ -440,106 +514,163 @@ const EventDetailPage = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="rounded-2xl border border-border bg-card p-6"
+                  className="rounded-xl border border-border bg-card"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Recent Contacts</h3>
+                  <div className="p-4 border-b border-border flex items-center justify-between">
+                    <h3 className="font-semibold">Recent Contacts</h3>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setActiveTab('contacts')}
-                      className="gap-2 rounded-full"
+                      className="text-xs h-7"
                     >
-                      View All
+                      View All ({eventContacts.length})
                     </Button>
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {eventContacts.slice(0, 6).map((contact) => (
-                      <div
-                        key={contact.id}
-                        onClick={() => setSelectedContactId(contact.id)}
-                        className="p-4 rounded-xl border border-border hover:bg-accent/50 transition-colors cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                            {contact.contactName.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{contact.contactName}</p>
-                            {contact.company && (
-                              <p className="text-xs text-muted-foreground truncate">
-                                {contact.company}
-                              </p>
-                            )}
+                  <div className="p-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {eventContacts.slice(0, 6).map((contact) => (
+                        <div
+                          key={contact.id}
+                          onClick={() => setSelectedContactId(contact.id)}
+                          className="p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
+                              {contact.contactName.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{contact.contactName}</p>
+                              {contact.company && (
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {contact.company}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </motion.div>
               )}
             </TabsContent>
 
             {/* Contacts Tab */}
-            <TabsContent value="contacts" className="space-y-6">
+            <TabsContent value="contacts" className="space-y-4 mt-0">
               {eventContacts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {eventContacts.map((contact, index) => {
-                    const contactCard = savedCards.find(card => card.id === contact.profileCardId);
-                    
-                    return (
-                      <motion.div
-                        key={contact.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        onClick={() => setSelectedContactId(contact.id)}
-                        className="rounded-2xl border border-border bg-card p-5 hover:shadow-lg transition-all cursor-pointer group"
-                      >
-                        <div className="flex items-start gap-3 mb-3">
-                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold group-hover:scale-110 transition-transform">
-                            {contact.contactName.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold truncate">{contact.contactName}</h3>
-                            {contact.title && (
-                              <p className="text-sm text-muted-foreground truncate">{contact.title}</p>
-                            )}
-                          </div>
-                        </div>
+                <div className="rounded-xl border border-border bg-card overflow-hidden">
+                  <div className="p-4 border-b border-border flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold">All Contacts</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {eventContacts.length} contact{eventContacts.length !== 1 ? 's' : ''} from this event
+                      </p>
+                    </div>
+                  </div>
+                  <ScrollArea className="h-[500px]">
+                    <div className="divide-y divide-border">
+                      {eventContacts.map((contact, index) => {
+                        const contactCard = savedCards.find(card => card.id === contact.profileCardId);
+                        
+                        return (
+                          <motion.div
+                            key={contact.id}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: index * 0.03 }}
+                            className="p-4 hover:bg-accent/30 transition-colors cursor-pointer group"
+                            onClick={() => setSelectedContactId(contact.id)}
+                          >
+                            <div className="flex items-start gap-4">
+                              <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold shrink-0">
+                                {contact.contactName.charAt(0).toUpperCase()}
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div>
+                                    <h4 className="font-semibold text-sm">{contact.contactName}</h4>
+                                    {contact.title && (
+                                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                        <Briefcase className="h-3 w-3" />
+                                        {contact.title}
+                                      </p>
+                                    )}
+                                  </div>
+                                  
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <MoreHorizontal className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={() => navigate(`/contacts/${contact.id}`)}>
+                                        <ExternalLink className="h-4 w-4 mr-2" />
+                                        View Details
+                                      </DropdownMenuItem>
+                                      {contact.email && (
+                                        <DropdownMenuItem onClick={() => window.open(`mailto:${contact.email}`)}>
+                                          <Mail className="h-4 w-4 mr-2" />
+                                          Send Email
+                                        </DropdownMenuItem>
+                                      )}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                                
+                                <div className="flex flex-wrap items-center gap-3 mt-2">
+                                  {contact.company && (
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Building2 className="h-3 w-3" />
+                                      {contact.company}
+                                    </span>
+                                  )}
+                                  {contact.email && (
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Mail className="h-3 w-3" />
+                                      {contact.email}
+                                    </span>
+                                  )}
+                                  {contact.phone && (
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Phone className="h-3 w-3" />
+                                      {contact.phone}
+                                    </span>
+                                  )}
+                                </div>
 
-                        {contact.company && (
-                          <p className="text-sm font-medium text-muted-foreground mb-2">
-                            {contact.company}
-                          </p>
-                        )}
-                        
-                        {contact.email && (
-                          <p className="text-xs text-muted-foreground truncate mb-3">
-                            {contact.email}
-                          </p>
-                        )}
-                        
-                        {contactCard && (
-                          <div className="pt-3 border-t border-border">
-                            <span className="text-xs text-primary font-medium">
-                              View Business Card →
-                            </span>
-                          </div>
-                        )}
-                      </motion.div>
-                    );
-                  })}
+                                {contactCard && (
+                                  <div className="mt-2">
+                                    <Badge variant="outline" className="text-xs">
+                                      Business Card Available
+                                    </Badge>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-border bg-card p-12 text-center">
-                  <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No Contacts Yet</h3>
-                  <p className="text-muted-foreground mb-6">
+                <div className="rounded-xl border border-border bg-card p-12 text-center">
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <Users className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <h3 className="font-semibold mb-1">No Contacts Yet</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
                     Start adding contacts and tag them with "{event.name}"
                   </p>
-                  <Button onClick={() => navigate('/contacts')} className="gap-2 rounded-full">
+                  <Button onClick={() => navigate('/contacts')} size="sm" className="gap-2">
                     Go to Contacts
                   </Button>
                 </div>
@@ -547,46 +678,33 @@ const EventDetailPage = () => {
             </TabsContent>
 
             {/* Goals Tab */}
-            <TabsContent value="goals" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-3">
-                {/* Preparation Goals */}
-                <GoalCategory
-                  title="Preparation"
-                  icon={<Calendar className="h-5 w-5" />}
-                  category="preparation"
-                  goals={goalStats.byCategory.preparation}
-                  onToggle={toggleGoal}
-                  onDelete={deleteGoal}
+            <TabsContent value="goals" className="space-y-6 mt-0">
+              {/* Quick Add Goal */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl border border-border bg-card p-4"
+              >
+                <QuickAddGoal 
                   onAdd={addGoal}
-                  newGoalTitle={newGoalTitle}
-                  setNewGoalTitle={setNewGoalTitle}
+                  selectedCategory={selectedGoalCategory}
+                  setSelectedCategory={setSelectedGoalCategory}
                 />
+              </motion.div>
 
-                {/* Networking Goals */}
-                <GoalCategory
-                  title="Networking"
-                  icon={<Users className="h-5 w-5" />}
-                  category="networking"
-                  goals={goalStats.byCategory.networking}
-                  onToggle={toggleGoal}
-                  onDelete={deleteGoal}
-                  onAdd={addGoal}
-                  newGoalTitle={newGoalTitle}
-                  setNewGoalTitle={setNewGoalTitle}
-                />
-
-                {/* Follow-up Goals */}
-                <GoalCategory
-                  title="Follow-up"
-                  icon={<Send className="h-5 w-5" />}
-                  category="followup"
-                  goals={goalStats.byCategory.followup}
-                  onToggle={toggleGoal}
-                  onDelete={deleteGoal}
-                  onAdd={addGoal}
-                  newGoalTitle={newGoalTitle}
-                  setNewGoalTitle={setNewGoalTitle}
-                />
+              {/* Goals by Category */}
+              <div className="grid gap-4 lg:grid-cols-3">
+                {(['preparation', 'networking', 'followup'] as const).map((category, idx) => (
+                  <GoalCategory
+                    key={category}
+                    title={category === 'followup' ? 'Follow-up' : category.charAt(0).toUpperCase() + category.slice(1)}
+                    category={category}
+                    goals={goalStats.byCategory[category]}
+                    onToggle={toggleGoal}
+                    onDelete={deleteGoal}
+                    delay={idx * 0.1}
+                  />
+                ))}
               </div>
             </TabsContent>
           </Tabs>
@@ -602,7 +720,7 @@ const EventDetailPage = () => {
         />
       )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Event Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -623,6 +741,162 @@ const EventDetailPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Delete Banner Confirmation Dialog */}
+      <AlertDialog open={showDeleteBannerDialog} onOpenChange={setShowDeleteBannerDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Banner Image?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the custom banner image for this event. A default banner will be shown instead.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteBanner}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove Banner
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Banner Dialog */}
+      <Dialog open={showEditBannerDialog} onOpenChange={setShowEditBannerDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Update Banner Image</DialogTitle>
+            <DialogDescription>
+              Upload a new banner image for this event.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleBannerFileChange}
+              className="hidden"
+            />
+            
+            {newBannerPreview ? (
+              <div className="relative rounded-lg overflow-hidden aspect-[3/1]">
+                <img
+                  src={newBannerPreview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="absolute top-2 right-2 h-7 w-7"
+                  onClick={() => setNewBannerPreview(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
+              >
+                <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Click to upload or drag and drop
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  PNG, JPG up to 5MB
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowEditBannerDialog(false);
+              setNewBannerPreview(null);
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveBanner} disabled={!newBannerPreview}>
+              Save Banner
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+// Quick Add Goal Component
+interface QuickAddGoalProps {
+  onAdd: (title: string, category: 'preparation' | 'networking' | 'followup', priority: 'low' | 'medium' | 'high') => void;
+  selectedCategory: 'preparation' | 'networking' | 'followup';
+  setSelectedCategory: (category: 'preparation' | 'networking' | 'followup') => void;
+}
+
+const QuickAddGoal = ({ onAdd, selectedCategory, setSelectedCategory }: QuickAddGoalProps) => {
+  const [title, setTitle] = useState('');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
+
+  const handleSubmit = () => {
+    if (!title.trim()) return;
+    onAdd(title, selectedCategory, priority);
+    setTitle('');
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Plus className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium">Quick Add Goal</span>
+      </div>
+      
+      <div className="flex gap-2">
+        <Input
+          placeholder="Enter goal title..."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+          className="flex-1"
+        />
+        <Button onClick={handleSubmit} disabled={!title.trim()} size="sm">
+          Add
+        </Button>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <div className="flex gap-1">
+          {(['preparation', 'networking', 'followup'] as const).map((cat) => (
+            <Button
+              key={cat}
+              variant={selectedCategory === cat ? 'default' : 'outline'}
+              size="sm"
+              className="text-xs h-7 capitalize"
+              onClick={() => setSelectedCategory(cat)}
+            >
+              {cat === 'followup' ? 'Follow-up' : cat}
+            </Button>
+          ))}
+        </div>
+        
+        <div className="flex gap-1 ml-auto">
+          {(['low', 'medium', 'high'] as const).map((p) => (
+            <Button
+              key={p}
+              variant={priority === p ? 'secondary' : 'ghost'}
+              size="sm"
+              className="text-xs h-7 capitalize"
+              onClick={() => setPriority(p)}
+            >
+              {p}
+            </Button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
@@ -630,114 +904,106 @@ const EventDetailPage = () => {
 // Goal Category Component
 interface GoalCategoryProps {
   title: string;
-  icon: React.ReactNode;
   category: 'preparation' | 'networking' | 'followup';
   goals: EventGoal[];
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
-  onAdd: (category: 'preparation' | 'networking' | 'followup') => void;
-  newGoalTitle: string;
-  setNewGoalTitle: (title: string) => void;
+  delay?: number;
 }
 
 const GoalCategory = ({
   title,
-  icon,
   category,
   goals,
   onToggle,
   onDelete,
-  onAdd,
-  newGoalTitle,
-  setNewGoalTitle,
+  delay = 0,
 }: GoalCategoryProps) => {
-  const [isAdding, setIsAdding] = useState(false);
   const completed = goals.filter(g => g.completed).length;
   const total = goals.length;
   const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-  const handleAdd = () => {
-    onAdd(category);
-    setIsAdding(false);
+  const categoryIcons = {
+    preparation: Calendar,
+    networking: Users,
+    followup: Send,
+  };
+  
+  const Icon = categoryIcons[category];
+
+  const priorityColors = {
+    low: 'bg-slate-500/10 text-slate-500',
+    medium: 'bg-amber-500/10 text-amber-500',
+    high: 'bg-red-500/10 text-red-500',
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-border bg-card p-6"
+      transition={{ delay }}
+      className="rounded-xl border border-border bg-card overflow-hidden"
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          {icon}
-          <h3 className="font-semibold">{title}</h3>
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-lg bg-muted flex items-center justify-center">
+              <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+            <h3 className="font-semibold text-sm">{title}</h3>
+          </div>
+          <Badge variant="secondary" className="text-xs">
+            {completed}/{total}
+          </Badge>
         </div>
-        <Badge variant="secondary" className="rounded-full">
-          {completed}/{total}
-        </Badge>
+        <Progress value={progress} className="h-1" />
       </div>
 
-      <Progress value={progress} className="h-2 mb-6" />
-
-      <div className="space-y-2 mb-4">
-        <AnimatePresence>
-          {goals.map((goal) => (
-            <motion.div
-              key={goal.id}
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="flex items-start gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors group"
-            >
-              <Checkbox
-                checked={goal.completed}
-                onCheckedChange={() => onToggle(goal.id)}
-                className="mt-0.5"
-              />
-              <p className={`flex-1 text-sm ${goal.completed ? 'line-through text-muted-foreground' : ''}`}>
-                {goal.title}
-              </p>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => onDelete(goal.id)}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-
-      {isAdding ? (
-        <div className="flex gap-2">
-          <Input
-            placeholder="Enter goal..."
-            value={newGoalTitle}
-            onChange={(e) => setNewGoalTitle(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            className="text-sm"
-            autoFocus
-          />
-          <Button size="sm" onClick={handleAdd} disabled={!newGoalTitle.trim()}>
-            Add
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setIsAdding(false)}>
-            Cancel
-          </Button>
+      <ScrollArea className="h-[280px]">
+        <div className="p-2">
+          <AnimatePresence>
+            {goals.length > 0 ? (
+              goals.map((goal) => (
+                <motion.div
+                  key={goal.id}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex items-start gap-2 p-2 rounded-lg hover:bg-accent/50 transition-colors group"
+                >
+                  <Checkbox
+                    checked={goal.completed}
+                    onCheckedChange={() => onToggle(goal.id)}
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm ${goal.completed ? 'line-through text-muted-foreground' : ''}`}>
+                      {goal.title}
+                    </p>
+                    {goal.priority && (
+                      <Badge variant="outline" className={`text-[10px] mt-1 ${priorityColors[goal.priority]}`}>
+                        {goal.priority}
+                      </Badge>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                    onClick={() => onDelete(goal.id)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </motion.div>
+              ))
+            ) : (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                No goals yet
+              </div>
+            )}
+          </AnimatePresence>
         </div>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsAdding(true)}
-          className="w-full gap-2 rounded-full"
-        >
-          <Plus className="h-4 w-4" />
-          Add Goal
-        </Button>
-      )}
+      </ScrollArea>
     </motion.div>
   );
 };
