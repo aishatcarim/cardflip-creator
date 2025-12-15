@@ -2,14 +2,13 @@ import { useState, useMemo } from 'react';
 import { AppHeader } from '@shared/components';
 import { Dock } from '@shared/components';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, CreditCard, Users, BarChart3, Calendar, Download, Eye, EyeOff, Plus, Sparkles, Play, Clock, TrendingUp, CheckCircle2, AlertCircle, MapPin, ChevronRight } from 'lucide-react';
+import { Home, Users, BarChart3, Calendar, Download, Eye, EyeOff, Plus, Sparkles, Play, Clock, TrendingUp, CheckCircle2, AlertCircle, MapPin, ChevronRight, ImageIcon } from 'lucide-react';
 import { useEventData } from '../hooks/useEventData';
 import { EmptyState } from '@shared/components';
 import { Button } from '@shared/ui/button';
 import { Badge } from '@shared/ui/badge';
 import { Progress } from '@shared/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
-import { Card } from '@shared/ui/card';
 import { MobileTabBar } from '@shared/components';
 import { useIsMobile } from '@shared/hooks';
 import { useNetworkContactsStore } from '@contacts/store/networkContactsStore';
@@ -17,6 +16,9 @@ import { useEventsStore } from '../store/eventsStore';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AddEventDialog } from '../components/EventActions/AddEventDialog';
+import conferenceDefault from '@/assets/event-banners/conference-default.jpg';
+import meetupDefault from '@/assets/event-banners/meetup-default.jpg';
+import workshopDefault from '@/assets/event-banners/workshop-default.jpg';
 
 type EventTab = "upcoming" | "live" | "past";
 
@@ -33,26 +35,16 @@ const EventsPage = () => {
 
   const eventData = useEventData();
 
-  // Generate gradient backgrounds for events
-  const gradients = [
-    'from-violet-500 to-purple-600',
-    'from-blue-500 to-cyan-600',
-    'from-emerald-500 to-teal-600',
-    'from-orange-500 to-pink-600',
-    'from-rose-500 to-pink-600',
-    'from-indigo-500 to-blue-600',
-  ];
-
-  // Mock data for Event Lifecycle
+  // Mock data for Event Lifecycle with banner images
   const mockUpcomingEvents = useMemo(() => [
     {
       id: '1',
       name: 'Tech Startup Meetup',
-      date: '2025-11-20T18:00:00Z',
+      date: '2025-12-20T18:00:00Z',
       location: 'Downtown Conference Center',
       expectedAttendees: 150,
-      daysUntil: 2,
-      gradient: gradients[0],
+      daysUntil: 5,
+      bannerUrl: conferenceDefault,
       checklist: [
         { id: '1', task: 'Prepare business cards', completed: true },
         { id: '2', task: 'Research attending companies', completed: false },
@@ -64,11 +56,11 @@ const EventsPage = () => {
     {
       id: '2',
       name: 'Industry Networking Mixer',
-      date: '2025-11-25T19:30:00Z',
+      date: '2025-12-25T19:30:00Z',
       location: 'Riverside Hotel Ballroom',
       expectedAttendees: 200,
-      daysUntil: 7,
-      gradient: gradients[1],
+      daysUntil: 10,
+      bannerUrl: meetupDefault,
       checklist: [
         { id: '1', task: 'Update LinkedIn profile', completed: true },
         { id: '2', task: 'Prepare elevator pitch', completed: false },
@@ -78,11 +70,11 @@ const EventsPage = () => {
     {
       id: '3',
       name: 'AI & Machine Learning Summit',
-      date: '2025-12-05T09:00:00Z',
+      date: '2026-01-05T09:00:00Z',
       location: 'Tech Hub Innovation Center',
       expectedAttendees: 300,
-      daysUntil: 17,
-      gradient: gradients[2],
+      daysUntil: 21,
+      bannerUrl: workshopDefault,
       checklist: [
         { id: '1', task: 'Review speaker agenda', completed: false },
         { id: '2', task: 'Book hotel accommodation', completed: true },
@@ -95,7 +87,7 @@ const EventsPage = () => {
     {
       id: '4',
       name: 'Developer Conference 2025',
-      date: '2025-11-10T09:00:00Z',
+      date: '2025-12-10T09:00:00Z',
       location: 'Convention Center',
       attendees: 500,
       contactsCollected: 45,
@@ -103,12 +95,12 @@ const EventsPage = () => {
       followUpsResponded: 12,
       goalProgress: 75,
       daysSince: 5,
-      gradient: gradients[3]
+      bannerUrl: conferenceDefault
     },
     {
       id: '5',
       name: 'Startup Pitch Night',
-      date: '2025-11-05T18:00:00Z',
+      date: '2025-12-05T18:00:00Z',
       location: 'Innovation Hub',
       attendees: 120,
       contactsCollected: 28,
@@ -116,12 +108,12 @@ const EventsPage = () => {
       followUpsResponded: 8,
       goalProgress: 85,
       daysSince: 10,
-      gradient: gradients[4]
+      bannerUrl: meetupDefault
     },
     {
       id: '6',
       name: 'Product Design Workshop',
-      date: '2025-10-28T14:00:00Z',
+      date: '2025-11-28T14:00:00Z',
       location: 'Design Studio Central',
       attendees: 80,
       contactsCollected: 18,
@@ -129,7 +121,7 @@ const EventsPage = () => {
       followUpsResponded: 11,
       goalProgress: 95,
       daysSince: 18,
-      gradient: gradients[5]
+      bannerUrl: workshopDefault
     }
   ], []);
 
@@ -212,7 +204,7 @@ const EventsPage = () => {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className={`bg-gradient-to-r ${activeEvent.gradient} text-white overflow-hidden`}
+            className="bg-primary text-primary-foreground overflow-hidden"
           >
             <div className="container mx-auto px-4 py-4">
               <div className="flex items-center justify-between">
@@ -238,18 +230,7 @@ const EventsPage = () => {
                     className="rounded-full"
                   >
                     End Event
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-20 gap-3"
-                      onClick={() => navigate(`/events/${activeEvent.id}`, { state: { event: activeEvent } })}
-                    >
-                      <MapPin className="h-6 w-6" />
-                      <div className="text-left">
-                        <div className="font-semibold">View Details</div>
-                        <div className="text-xs opacity-90">Event page</div>
-                      </div>
-                    </Button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -399,53 +380,72 @@ const EventsPage = () => {
                       key={event.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="rounded-2xl border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow"
+                      transition={{ delay: index * 0.08 }}
+                      className="group rounded-xl border border-border bg-card overflow-hidden hover:shadow-xl hover:border-primary/20 transition-all duration-300"
                     >
-                      {/* Banner */}
-                      <div className={`h-32 bg-gradient-to-r ${event.gradient} relative`}>
-                        <div className="absolute inset-0 bg-black/10" />
-                        <div className="absolute top-4 right-4">
-                          <Badge className="bg-white/90 text-foreground hover:bg-white">
-                            {event.daysUntil} days
-                          </Badge>
+                      {/* Banner with Image */}
+                      <div className="relative h-36 overflow-hidden">
+                        <img 
+                          src={event.bannerUrl} 
+                          alt={event.name}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                        <Badge className="absolute top-3 right-3 bg-background/90 text-foreground border-0 shadow-sm">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {event.daysUntil}d
+                        </Badge>
+                        <div className="absolute bottom-3 left-4 right-4">
+                          <h3 className="text-lg font-semibold text-white drop-shadow-md line-clamp-1">{event.name}</h3>
                         </div>
                       </div>
 
                       {/* Content */}
-                      <div className="p-6 space-y-4">
-                        <div>
-                          <h3 className="text-xl font-bold mb-2">{event.name}</h3>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <MapPin className="h-4 w-4" />
-                            {event.location}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                            <Users className="h-4 w-4" />
-                            {event.expectedAttendees} expected attendees
+                      <div className="p-5 space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                              <MapPin className="h-3.5 w-3.5" />
+                              <span className="truncate max-w-[180px]">{event.location}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                              <Users className="h-3.5 w-3.5" />
+                              <span>{event.expectedAttendees} attendees</span>
+                            </div>
                           </div>
                         </div>
 
                         {/* Checklist Progress */}
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center justify-between text-xs">
                             <span className="text-muted-foreground">Preparation</span>
-                            <span className="font-medium">{completedTasks}/{totalTasks} tasks</span>
+                            <span className="font-medium text-foreground">{completedTasks}/{totalTasks}</span>
                           </div>
-                          <Progress value={progress} className="h-2" />
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary rounded-full transition-all duration-500" 
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
                         </div>
 
                         {/* Actions */}
-                        <div className="flex gap-2 pt-2">
+                        <div className="flex gap-2 pt-1">
                           <Button
                             onClick={() => handleActivateEvent(event.id)}
-                            className="flex-1 gap-2"
+                            size="sm"
+                            className="flex-1 gap-1.5 h-9"
                             disabled={event.daysUntil > 1}
                           >
-                            <Play className="h-4 w-4" />
-                            {event.daysUntil > 1 ? 'Not Ready' : 'Start Event'}
+                            <Play className="h-3.5 w-3.5" />
+                            {event.daysUntil > 1 ? 'Not Ready' : 'Start'}
                           </Button>
-                          <Button variant="outline" size="icon" onClick={() => navigate(`/events/${event.id}`, { state: { event } })}>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-9 px-3"
+                            onClick={() => navigate(`/events/${event.id}`, { state: { event } })}
+                          >
                             <ChevronRight className="h-4 w-4" />
                           </Button>
                         </div>
@@ -478,16 +478,21 @@ const EventsPage = () => {
                 className="space-y-6"
               >
                 {/* Event Card */}
-                <div className="rounded-2xl border border-border bg-card overflow-hidden">
-                  <div className={`h-40 bg-gradient-to-r ${activeEvent.gradient} relative`}>
-                    <div className="absolute inset-0 bg-black/20" />
+                <div className="rounded-xl border border-border bg-card overflow-hidden">
+                  <div className="h-48 relative overflow-hidden">
+                    <img 
+                      src={activeEvent.bannerUrl || conferenceDefault} 
+                      alt={activeEvent.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center text-white">
                         <div className="flex items-center justify-center gap-2 mb-2">
                           <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
-                          <span className="text-sm font-semibold">LIVE NOW</span>
+                          <span className="text-sm font-semibold tracking-wide">LIVE NOW</span>
                         </div>
-                        <h2 className="text-3xl font-bold">{activeEvent.name}</h2>
+                        <h2 className="text-3xl font-bold drop-shadow-lg">{activeEvent.name}</h2>
                       </div>
                     </div>
                   </div>
@@ -578,66 +583,72 @@ const EventsPage = () => {
                     key={event.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="rounded-2xl border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow"
+                    transition={{ delay: index * 0.08 }}
+                    className="group rounded-xl border border-border bg-card overflow-hidden hover:shadow-xl hover:border-primary/20 transition-all duration-300"
                   >
-                    {/* Banner */}
-                    <div className={`h-32 bg-gradient-to-r ${event.gradient} relative`}>
-                      <div className="absolute inset-0 bg-black/20" />
-                      <div className="absolute top-4 right-4">
-                        <Badge className="bg-white/90 text-foreground hover:bg-white">
-                          {event.daysSince} days ago
-                        </Badge>
-                      </div>
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <h3 className="text-xl font-bold text-white">{event.name}</h3>
+                    {/* Banner with Image */}
+                    <div className="relative h-36 overflow-hidden">
+                      <img 
+                        src={event.bannerUrl} 
+                        alt={event.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                      <Badge className="absolute top-3 right-3 bg-background/90 text-foreground border-0 shadow-sm">
+                        {event.daysSince}d ago
+                      </Badge>
+                      <div className="absolute bottom-3 left-4 right-4">
+                        <h3 className="text-lg font-semibold text-white drop-shadow-md line-clamp-1">{event.name}</h3>
                       </div>
                     </div>
 
                     {/* Content */}
-                    <div className="p-6 space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-2xl font-bold">{event.contactsCollected}</p>
-                          <p className="text-xs text-muted-foreground">Contacts</p>
+                    <div className="p-5 space-y-4">
+                      {/* Stats Grid */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="text-center p-2 rounded-lg bg-muted/50">
+                          <p className="text-lg font-bold">{event.contactsCollected}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Contacts</p>
                         </div>
-                        <div>
-                          <p className="text-2xl font-bold">{event.followUpsSent}</p>
-                          <p className="text-xs text-muted-foreground">Follow-ups</p>
+                        <div className="text-center p-2 rounded-lg bg-muted/50">
+                          <p className="text-lg font-bold">{event.followUpsSent}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Follow-ups</p>
+                        </div>
+                        <div className="text-center p-2 rounded-lg bg-muted/50">
+                          <p className="text-lg font-bold">{Math.round((event.followUpsResponded / event.followUpsSent) * 100)}%</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Response</p>
                         </div>
                       </div>
 
+                      {/* Goal Progress */}
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Response Rate</span>
-                          <span className="font-medium">
-                            {Math.round((event.followUpsResponded / event.followUpsSent) * 100)}%
-                          </span>
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-1.5">
+                            {event.goalProgress >= 80 ? (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                            ) : (
+                              <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                            )}
+                            <span className="text-muted-foreground">Goal progress</span>
+                          </div>
+                          <span className="font-medium">{event.goalProgress}%</span>
                         </div>
-                        <Progress
-                          value={(event.followUpsResponded / event.followUpsSent) * 100}
-                          className="h-2"
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-2 pt-2">
-                        {event.goalProgress >= 80 ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <AlertCircle className="h-5 w-5 text-amber-500" />
-                        )}
-                        <span className="text-sm text-muted-foreground">
-                          {event.goalProgress}% goal achieved
-                        </span>
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-500 ${event.goalProgress >= 80 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                            style={{ width: `${event.goalProgress}%` }}
+                          />
+                        </div>
                       </div>
 
                       <Button
                         variant="outline"
-                        className="w-full gap-2"
+                        size="sm"
+                        className="w-full h-9 gap-1.5"
                         onClick={() => handleSendFollowUps(event.id)}
                       >
                         View Details
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </motion.div>
