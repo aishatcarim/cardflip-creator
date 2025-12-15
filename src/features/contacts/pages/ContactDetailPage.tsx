@@ -6,6 +6,7 @@ import { Button } from '@shared/ui/button';
 import { AICopilotChat } from '../components/AI/AICopilotChat';
 import { ContactProfile } from '../components/ContactDetail/ContactProfile';
 import { ContactActivity } from '../components/ContactDetail/ContactActivity';
+import { EditContactModal } from '../components/ContactDetail/EditContactModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
 import { ArrowLeft, Edit, Download, Mail, Clock, Sparkles, Users, MessageSquare } from 'lucide-react';
 import { Card } from '@shared/ui/card';
@@ -17,6 +18,7 @@ const ContactDetailPage = () => {
 
   const contact = contacts.find(c => c.id === contactId);
   const [activeTab, setActiveTab] = useState('copilot');
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   if (!contact) {
     return (
@@ -87,12 +89,19 @@ const ContactDetailPage = () => {
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(`/contacts/${contact.id}/edit`)}>
+            <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
           </div>
         </div>
+
+        {/* Edit Contact Modal */}
+        <EditContactModal 
+          contact={contact} 
+          open={editModalOpen} 
+          onOpenChange={setEditModalOpen} 
+        />
 
         {/* Main Content */}
         <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6">
