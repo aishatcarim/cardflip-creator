@@ -6,6 +6,7 @@ export interface NetworkContact {
   profileCardId: string;
   contactName: string;
   event: string;
+  eventTags: string[]; // Multiple event tags for better organization
   industry: string;
   interests: string[];
   notes: string;
@@ -59,6 +60,7 @@ const mockContacts: NetworkContact[] = [
     company: 'TechCorp Solutions',
     title: 'Senior Product Manager',
     event: 'Tech Summit 2024',
+    eventTags: ['Tech Summit 2024', 'AI Conference 2024'],
     industry: 'Technology',
     interests: ['AI', 'Product Management', 'SaaS'],
     notes: 'Interested in our AI solutions. Follow up about partnership opportunities.',
@@ -76,6 +78,7 @@ const mockContacts: NetworkContact[] = [
     company: 'Innovate.io',
     title: 'CTO',
     event: 'Tech Summit 2024',
+    eventTags: ['Tech Summit 2024'],
     industry: 'Technology',
     interests: ['Cloud Infrastructure', 'DevOps', 'Scaling'],
     notes: 'Looking for cloud infrastructure partners. Discussed potential collaboration.',
@@ -93,6 +96,7 @@ const mockContacts: NetworkContact[] = [
     company: 'DataStream Analytics',
     title: 'VP of Engineering',
     event: 'Tech Summit 2024',
+    eventTags: ['Tech Summit 2024', 'Data Analytics Meetup'],
     industry: 'Data Analytics',
     interests: ['Big Data', 'Machine Learning', 'Analytics'],
     notes: 'Impressed by our data processing capabilities. Wants a demo.',
@@ -109,6 +113,7 @@ const mockContacts: NetworkContact[] = [
     company: 'StartupHub',
     title: 'Founder & CEO',
     event: 'Startup Networking Mixer',
+    eventTags: ['Startup Networking Mixer'],
     industry: 'Startups',
     interests: ['Entrepreneurship', 'Funding', 'Mentorship'],
     notes: 'Early stage founder seeking mentorship and investment connections.',
@@ -126,6 +131,7 @@ const mockContacts: NetworkContact[] = [
     company: 'VentureCap Partners',
     title: 'Investment Partner',
     event: 'Startup Networking Mixer',
+    eventTags: ['Startup Networking Mixer', 'VC Connect 2024'],
     industry: 'Venture Capital',
     interests: ['AI/ML', 'Series A', 'Tech Investments'],
     notes: 'Interested in Series A opportunities in AI/ML space.',
