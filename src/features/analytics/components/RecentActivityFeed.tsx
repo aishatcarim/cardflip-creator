@@ -1,5 +1,5 @@
 import { Card } from '@shared/ui/card';
-import { NetworkContact } from '@/store/networkContactsStore';
+import { NetworkContact } from '@contacts/store/networkContactsStore';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@shared/ui/badge';
 import { Clock, User } from 'lucide-react';

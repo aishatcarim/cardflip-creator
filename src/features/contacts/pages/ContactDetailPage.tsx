@@ -47,10 +47,7 @@ const ContactDetailPage = () => {
   };
 
   const handleLinkedIn = () => {
-    const linkedinLink = contact.quickLinks?.find(link => link.icon === 'Linkedin');
-    if (linkedinLink) {
-      window.open(linkedinLink.url, '_blank');
-    }
+    // LinkedIn functionality not available for this contact type
   };
 
   return (
@@ -83,12 +80,6 @@ const ContactDetailPage = () => {
               <Button variant="outline" size="sm" onClick={handleEmail}>
                 <Mail className="h-4 w-4 mr-2" />
                 Email
-              </Button>
-            )}
-            {contact.quickLinks?.find(link => link.icon === 'Linkedin') && (
-              <Button variant="outline" size="sm" onClick={handleLinkedIn}>
-                <Linkedin className="h-4 w-4 mr-2" />
-                LinkedIn
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={handleExport}>

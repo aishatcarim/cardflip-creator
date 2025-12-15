@@ -5,6 +5,7 @@
 export { ProfilePage } from './pages/ProfilePage';
 export { QRShowcasePage } from './pages/QRShowcasePage';
 export { CardsPage } from './pages/CardsPage';
+export { SavedCardsPage } from './pages/SavedCardsPage';
 export { ProfileViewerPage } from './pages/ProfileViewerPage';
 
 // Hooks

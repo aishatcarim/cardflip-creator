@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { CardData } from "../../../store/cardStore";
+import { CardData } from "@profile/store/cardStore";
 import { Mail, Phone, Linkedin, Twitter, Globe } from "lucide-react";
 import { Badge } from "@shared/ui/badge";
 

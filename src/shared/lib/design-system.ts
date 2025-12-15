@@ -25,15 +25,15 @@ export const typography = {
   '4xl': 'text-4xl',    // 36px
 
   // Font weights
-  'normal': 'font-normal',
-  'medium': 'font-medium',
-  'semibold': 'font-semibold',
-  'bold': 'font-bold',
+  'weightNormal': 'font-normal',
+  'weightMedium': 'font-medium',
+  'weightSemibold': 'font-semibold',
+  'weightBold': 'font-bold',
 
   // Line heights
-  'tight': 'leading-tight',
-  'normal': 'leading-normal',
-  'relaxed': 'leading-relaxed',
+  'leadingTight': 'leading-tight',
+  'leadingNormal': 'leading-normal',
+  'leadingRelaxed': 'leading-relaxed',
 } as const;
 
 // Color Tokens

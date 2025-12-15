@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Dialog, DialogContent } from "@shared/ui/dialog";
 import { motion, useMotionValue, useTransform } from "framer-motion";
-import { CardData } from "../../../store/cardStore";
+import { CardData } from "@profile/store/cardStore";
 import { Mail, Phone, Linkedin, Twitter, Globe, X } from "lucide-react";
 import { Badge } from "@shared/ui/badge";
 import { Button } from "@shared/ui/button";

@@ -79,7 +79,7 @@ const getUrgencyIndicator = (contact: NetworkContact) => {
     return {
       icon: <Clock className="h-3 w-3" />,
       label: "Due Soon",
-      variant: "warning" as const
+      variant: "secondary" as const
     };
   }
 
@@ -245,20 +245,6 @@ export const ContactCard = ({ contact, index, onEdit, onDelete, onExport }: Cont
                 </Button>
               )}
 
-              {contact.quickLinks?.find(link => link.icon === 'Linkedin') && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const linkedin = contact.quickLinks.find(link => link.icon === 'Linkedin');
-                    if (linkedin) window.open(linkedin.url, '_blank');
-                  }}
-                  className="gap-1"
-                >
-                  <Linkedin className="h-3 w-3" />
-                </Button>
-              )}
             </div>
 
             {/* Secondary Actions */}
