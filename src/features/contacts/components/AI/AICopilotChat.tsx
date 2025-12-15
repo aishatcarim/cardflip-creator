@@ -122,23 +122,25 @@ export const AICopilotChat = ({ contact }: AICopilotChatProps) => {
   ];
 
   return (
-    <Card className="flex flex-col h-full rounded-[28px] border border-border bg-gradient-to-b from-white to-muted/80 shadow-soft">
-      <div className="flex items-center gap-3 border-b border-border/60 bg-white/80 px-5 py-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#CCE6FF] to-[#E4D7FF] text-foreground shadow-inner">
-          <Sparkles className="h-6 w-6 text-white" />
+    <Card className="flex flex-col h-full rounded-xl border border-border bg-card shadow-sm">
+      {/* Header */}
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <Sparkles className="h-5 w-5 text-primary" />
         </div>
-        <div>
-          <h3 className="text-lg font-semibold text-foreground">AI Networking Copilot</h3>
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold text-foreground">AI Networking Copilot</h3>
           <p className="text-xs text-muted-foreground">
-            Personalized prompts for {contact.contactName}
+            Personalized messages for {contact.contactName}
           </p>
         </div>
-        <span className="ml-auto rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.4em] text-muted-foreground">
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary">
           Beta
         </span>
       </div>
 
-      <ScrollArea className="flex-1 px-5 py-4">
+      {/* Chat Messages */}
+      <ScrollArea className="flex-1 px-4 py-4">
         <div className="space-y-4">
           {messages.map((msg) => (
             <div
@@ -146,7 +148,7 @@ export const AICopilotChat = ({ contact }: AICopilotChatProps) => {
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.role === 'user' ? (
-                <div className="max-w-[80%] rounded-2xl bg-accent text-accent-foreground px-5 py-3 text-sm shadow-sm">
+                <div className="max-w-[85%] rounded-xl bg-primary text-primary-foreground px-4 py-2.5 text-sm">
                   {msg.content}
                 </div>
               ) : (
@@ -157,10 +159,10 @@ export const AICopilotChat = ({ contact }: AICopilotChatProps) => {
 
           {isLoading && (
             <div className="flex justify-start">
-              <div className="rounded-2xl border border-border bg-white/80 px-4 py-2 text-sm text-muted-foreground shadow-sm">
+              <div className="rounded-xl border border-border bg-muted/50 px-4 py-2.5 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Thinking...</span>
+                  <span>Generating suggestions...</span>
                 </div>
               </div>
             </div>
@@ -170,17 +172,18 @@ export const AICopilotChat = ({ contact }: AICopilotChatProps) => {
         </div>
       </ScrollArea>
 
+      {/* Quick Prompts */}
       {messages.filter((m) => m.role === "user").length === 0 && (
-        <div className="px-5 pb-4">
-          <p className="text-xs font-semibold uppercase text-muted-foreground">Quick start</p>
-          <div className="mt-3 flex flex-wrap gap-2">
+        <div className="px-4 pb-3">
+          <p className="text-xs font-medium text-muted-foreground mb-2">Quick prompts</p>
+          <div className="flex flex-wrap gap-2">
             {quickPrompts.map((prompt, index) => (
               <Button
                 key={index}
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => setInput(prompt)}
-                className="rounded-2xl border border-border/60 px-4 py-2 text-sm text-foreground"
+                className="rounded-lg text-xs h-8"
               >
                 {prompt}
               </Button>
@@ -189,14 +192,15 @@ export const AICopilotChat = ({ contact }: AICopilotChatProps) => {
         </div>
       )}
 
-      <div className="border-t border-border/60 px-5 py-4">
-        <div className="flex items-end gap-3">
+      {/* Input Area */}
+      <div className="border-t border-border px-4 py-3">
+        <div className="flex items-end gap-2">
           <Textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask AI to help with follow-up messages..."
-            className="grow resize-none rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-accent"
+            placeholder="Ask AI to help craft a follow-up message..."
+            className="flex-1 resize-none rounded-lg border-border bg-background px-3 py-2 text-sm min-h-[40px] max-h-[120px]"
             rows={1}
             onKeyDown={handleKeyPress}
           />
@@ -204,13 +208,13 @@ export const AICopilotChat = ({ contact }: AICopilotChatProps) => {
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
             size="icon"
-            className="rounded-2xl bg-accent text-accent-foreground shadow-lg"
+            className="h-10 w-10 rounded-lg shrink-0"
           >
             <Send className="h-4 w-4" />
           </Button>
         </div>
-        <p className="text-[11px] text-muted-foreground mt-2">
-          Press Enter to send, Shift+Enter for a new line
+        <p className="text-[10px] text-muted-foreground mt-1.5">
+          Press Enter to send • Shift+Enter for new line
         </p>
       </div>
     </Card>
