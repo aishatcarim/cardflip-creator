@@ -100,9 +100,9 @@ export const EventTimeline = ({ event, open, onClose }: EventTimelineProps) => {
   return (
     <>
       <Sheet open={open} onOpenChange={onClose}>
-        <SheetContent side="right" className="w-full sm:max-w-4xl p-0 overflow-hidden">
+        <SheetContent side="right" className="w-full sm:max-w-xl p-0 overflow-hidden">
           {/* Banner Header */}
-          <div className="relative h-56 overflow-hidden">
+          <div className="relative h-36 overflow-hidden">
             <motion.img
               initial={{ scale: 1.1, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -118,36 +118,30 @@ export const EventTimeline = ({ event, open, onClose }: EventTimelineProps) => {
               variant="ghost" 
               size="icon" 
               onClick={onClose}
-              className="absolute top-4 right-4 bg-black/30 hover:bg-black/50 text-white backdrop-blur-md border border-white/20 transition-all duration-200"
+              className="absolute top-3 right-3 h-8 w-8 bg-black/30 hover:bg-black/50 text-white backdrop-blur-md border border-white/20 transition-all duration-200"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </Button>
 
             {/* Event Info Overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
+            <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
               <motion.div
-                initial={{ y: 30, opacity: 0 }}
+                initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
               >
-                <SheetTitle className="text-4xl font-bold mb-3 text-white drop-shadow-lg">
+                <SheetTitle className="text-xl font-semibold mb-2 text-white drop-shadow-lg">
                   {event.eventName}
                 </SheetTitle>
-                <div className="flex flex-wrap items-center gap-6 text-sm text-white/95 drop-shadow-md">
-                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                    <Calendar className="h-4 w-4" />
-                    <span>{format(new Date(event.mostRecentDate), 'MMMM d, yyyy')}</span>
+                <div className="flex items-center gap-3 text-xs text-white/90">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3 w-3" />
+                    <span>{format(new Date(event.mostRecentDate), 'MMM d, yyyy')}</span>
                   </div>
-                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                    <Users className="h-4 w-4" />
-                    <span>{event.contactCount} {event.contactCount === 1 ? 'contact' : 'contacts'}</span>
+                  <div className="flex items-center gap-1.5">
+                    <Users className="h-3 w-3" />
+                    <span>{event.contactCount} contacts</span>
                   </div>
-                  {totalWithFollowUp > 0 && (
-                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                      <TrendingUp className="h-4 w-4" />
-                      <span>{event.followUpStats.done} / {totalWithFollowUp} completed</span>
-                    </div>
-                  )}
                 </div>
               </motion.div>
             </div>
@@ -159,45 +153,25 @@ export const EventTimeline = ({ event, open, onClose }: EventTimelineProps) => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="px-8 pt-6 pb-5 border-b bg-gradient-to-br from-muted/30 to-background"
+              className="px-4 py-4 border-b bg-muted/30"
             >
-              <div className="grid grid-cols-4 gap-4">
-                <motion.div 
-                  whileHover={{ y: -2, scale: 1.02 }}
-                  className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-4 text-center border border-primary/20 shadow-sm hover:shadow-md transition-shadow cursor-default"
-                >
-                  <div className="text-3xl font-bold text-primary mb-1">
-                    {Math.round(event.completionRate)}%
-                  </div>
-                  <div className="text-xs font-medium text-muted-foreground">Progress</div>
-                </motion.div>
-                <motion.div 
-                  whileHover={{ y: -2, scale: 1.02 }}
-                  className="bg-gradient-to-br from-green-500/10 to-green-500/5 rounded-xl p-4 text-center border border-green-500/20 shadow-sm hover:shadow-md transition-shadow cursor-default"
-                >
-                  <div className="text-3xl font-bold text-green-600 dark:text-green-500 mb-1">
-                    {event.followUpStats.done}
-                  </div>
-                  <div className="text-xs font-medium text-muted-foreground">Done</div>
-                </motion.div>
-                <motion.div 
-                  whileHover={{ y: -2, scale: 1.02 }}
-                  className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 rounded-xl p-4 text-center border border-yellow-500/20 shadow-sm hover:shadow-md transition-shadow cursor-default"
-                >
-                  <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-500 mb-1">
-                    {event.followUpStats.pending}
-                  </div>
-                  <div className="text-xs font-medium text-muted-foreground">Pending</div>
-                </motion.div>
-                <motion.div 
-                  whileHover={{ y: -2, scale: 1.02 }}
-                  className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 rounded-xl p-4 text-center border border-blue-500/20 shadow-sm hover:shadow-md transition-shadow cursor-default"
-                >
-                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-500 mb-1">
-                    {event.followUpStats.snoozed}
-                  </div>
-                  <div className="text-xs font-medium text-muted-foreground">Snoozed</div>
-                </motion.div>
+              <div className="grid grid-cols-4 gap-2">
+                <div className="text-center p-2 rounded-lg bg-primary/10 border border-primary/20">
+                  <div className="text-lg font-semibold text-primary">{Math.round(event.completionRate)}%</div>
+                  <div className="text-[10px] text-muted-foreground">Progress</div>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="text-lg font-semibold text-emerald-600">{event.followUpStats.done}</div>
+                  <div className="text-[10px] text-muted-foreground">Done</div>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <div className="text-lg font-semibold text-amber-600">{event.followUpStats.pending}</div>
+                  <div className="text-[10px] text-muted-foreground">Pending</div>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <div className="text-lg font-semibold text-blue-600">{event.followUpStats.snoozed}</div>
+                  <div className="text-[10px] text-muted-foreground">Snoozed</div>
+                </div>
               </div>
             </motion.div>
           )}
@@ -207,46 +181,43 @@ export const EventTimeline = ({ event, open, onClose }: EventTimelineProps) => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="px-8 py-5 border-b bg-background/95 backdrop-blur-md sticky top-0 z-10 shadow-sm"
+            className="px-4 py-3 border-b bg-background sticky top-0 z-10"
           >
-            <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2">
               <Select value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
-                <SelectTrigger className="w-[180px] bg-background hover:bg-accent transition-colors">
-                  <Filter className="h-4 w-4 mr-2 text-primary" />
+                <SelectTrigger className="h-8 text-xs flex-1">
+                  <Filter className="h-3 w-3 mr-1.5 text-muted-foreground" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">✨ All Contacts</SelectItem>
-                  <SelectItem value="pending">⏳ Pending</SelectItem>
-                  <SelectItem value="done">✅ Done</SelectItem>
-                  <SelectItem value="snoozed">💤 Snoozed</SelectItem>
-                  <SelectItem value="none">➖ No Follow-up</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="done">Done</SelectItem>
+                  <SelectItem value="snoozed">Snoozed</SelectItem>
+                  <SelectItem value="none">No Follow-up</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={sort} onValueChange={(v) => setSort(v as SortType)}>
-                <SelectTrigger className="w-[180px] bg-background hover:bg-accent transition-colors">
-                  <ArrowUpDown className="h-4 w-4 mr-2 text-primary" />
+                <SelectTrigger className="h-8 text-xs flex-1">
+                  <ArrowUpDown className="h-3 w-3 mr-1.5 text-muted-foreground" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="tagged">📅 Most Recent</SelectItem>
-                  <SelectItem value="name">🔤 Alphabetical</SelectItem>
-                  <SelectItem value="dueDate">⏰ Due Date</SelectItem>
+                  <SelectItem value="tagged">Recent</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="dueDate">Due Date</SelectItem>
                 </SelectContent>
               </Select>
               
-              <div className="ml-auto flex items-center gap-2 bg-muted/50 px-4 py-2 rounded-lg">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">
-                  {filteredAndSortedContacts.length} {filteredAndSortedContacts.length === 1 ? 'contact' : 'contacts'}
-                </span>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground px-2">
+                <span className="font-medium">{filteredAndSortedContacts.length}</span>
               </div>
             </div>
           </motion.div>
 
-          <ScrollArea className="h-[calc(100vh-450px)]">
-            <div className="p-8 space-y-4">
+          <ScrollArea className="h-[calc(100vh-320px)]">
+            <div className="p-4 space-y-2">
               <AnimatePresence mode="popLayout">
                 {filteredAndSortedContacts.length > 0 ? (
                   filteredAndSortedContacts.map((contact, index) => (
@@ -264,19 +235,13 @@ export const EventTimeline = ({ event, open, onClose }: EventTimelineProps) => {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3 }}
-                    className="text-center py-20"
+                    className="text-center py-12"
                   >
-                    <motion.div 
-                      className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-muted to-muted/50 mb-5 shadow-lg"
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      <Users className="h-10 w-10 text-muted-foreground" />
-                    </motion.div>
-                    <p className="text-xl font-semibold mb-2">No contacts found</p>
-                    <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                      Try adjusting your filters to see more contacts from this event
-                    </p>
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted mb-3">
+                      <Users className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm font-medium mb-1">No contacts found</p>
+                    <p className="text-xs text-muted-foreground">Try adjusting your filters</p>
                   </motion.div>
                 )}
               </AnimatePresence>

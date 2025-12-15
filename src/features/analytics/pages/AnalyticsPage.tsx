@@ -13,9 +13,9 @@ import {
   EyeOff,
   TrendingUp,
   Target,
-  Zap,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  CheckCircle2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAnalyticsData } from '../hooks/useAnalyticsData';
@@ -241,34 +241,56 @@ const AnalyticsPage = () => {
           {/* Events */}
           <TabsContent value="events" className="space-y-4">
             {eventData.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {eventData.map((event, index) => (
-                  <motion.div
-                    key={event.eventName}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                    onClick={() => handleViewTimeline(event)}
-                    className="rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 transition-colors cursor-pointer group"
-                  >
-                    <div className="h-24 bg-gradient-to-br from-primary/80 to-primary relative">
-                      <div className="absolute bottom-3 left-4 right-4">
-                        <h3 className="text-sm font-semibold text-primary-foreground truncate">{event.eventName}</h3>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <div className="flex items-center justify-between text-sm">
-                        <div>
-                          <span className="text-lg font-semibold">{event.contactCount}</span>
-                          <span className="text-muted-foreground ml-1">contacts</span>
+              <div className="space-y-2">
+                {eventData.map((event, index) => {
+                  const completionPercent = Math.round(event.completionRate);
+                  return (
+                    <motion.div
+                      key={event.eventName}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.02 }}
+                      onClick={() => handleViewTimeline(event)}
+                      className="flex items-center gap-4 p-4 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors cursor-pointer group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="text-sm font-medium truncate">{event.eventName}</h3>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(event.mostRecentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(event.mostRecentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </span>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {event.contactCount}
+                          </span>
+                          {event.followUpStats.done > 0 && (
+                            <span className="flex items-center gap-1 text-emerald-600">
+                              <CheckCircle2 className="h-3 w-3" />
+                              {event.followUpStats.done} done
+                            </span>
+                          )}
+                          {event.followUpStats.pending > 0 && (
+                            <span className="text-amber-600">{event.followUpStats.pending} pending</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className="flex items-center gap-3">
+                        <div className="w-20">
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary rounded-full transition-all" 
+                              style={{ width: `${completionPercent}%` }} 
+                            />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground mt-0.5 block text-right">{completionPercent}%</span>
+                        </div>
+                        <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             ) : (
               <div className="rounded-xl border border-border bg-card p-12 text-center">
