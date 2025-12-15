@@ -1,5 +1,4 @@
-import { Card } from '@shared/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { IndustryStat } from '@analytics/hooks/useAnalyticsData';
 import { Briefcase } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -8,93 +7,79 @@ interface IndustryBreakdownChartProps {
   data: IndustryStat[];
 }
 
-const COLORS = [
-  'hsl(210 100% 50%)',
-  'hsl(280 80% 60%)',
-  'hsl(160 80% 45%)',
-  'hsl(40 95% 55%)',
-  'hsl(340 80% 60%)',
-  'hsl(190 70% 50%)',
-  'hsl(30 90% 55%)',
-  'hsl(250 70% 60%)',
-];
-
 export const IndustryBreakdownChart = ({ data }: IndustryBreakdownChartProps) => {
   if (data.length === 0) {
     return (
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Industry Breakdown</h3>
-        <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-            className="text-center"
-          >
-            <div className="mb-4 inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
-              <Briefcase className="h-8 w-8 text-primary" />
-            </div>
-            <p className="text-sm font-medium mb-1">No Industry Data Yet</p>
-            <p className="text-xs">Add contact industries to see breakdown!</p>
-          </motion.div>
+      <div className="rounded-xl border border-border bg-card p-6 h-full">
+        <span className="text-sm font-medium text-muted-foreground">Industry Breakdown</span>
+        <div className="h-[280px] flex flex-col items-center justify-center text-muted-foreground">
+          <Briefcase className="h-8 w-8 mb-3 opacity-40" />
+          <p className="text-sm">No industry data yet</p>
         </div>
-      </Card>
+      </div>
     );
   }
 
+  const sortedData = [...data].sort((a, b) => b.count - a.count).slice(0, 6);
+  const total = sortedData.reduce((sum, ind) => sum + ind.count, 0);
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const percentage = ((payload[0].value / total) * 100).toFixed(0);
+      return (
+        <div className="bg-popover border border-border rounded-lg shadow-lg px-3 py-2">
+          <p className="text-sm font-medium">{payload[0].payload.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {payload[0].value} contacts ({percentage}%)
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.3 }}
+      transition={{ duration: 0.3, delay: 0.15 }}
+      className="rounded-xl border border-border bg-card h-full"
     >
-      <Card className="p-8 hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 border-2">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Briefcase className="h-5 w-5 text-primary" />
-          </div>
-          <h3 className="text-xl font-bold">Top Industries</h3>
+      <div className="p-5 pb-0">
+        <span className="text-sm font-medium text-muted-foreground">Industry Breakdown</span>
+        <div className="flex items-baseline gap-2 mt-1">
+          <span className="text-2xl font-semibold">{sortedData.length}</span>
+          <span className="text-xs text-muted-foreground">industries</span>
         </div>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data} layout="vertical">
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
-            <XAxis 
-              type="number"
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-              stroke="hsl(var(--border))"
-            />
-            <YAxis 
-              dataKey="name" 
+      </div>
+
+      <div className="px-2">
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={sortedData} layout="vertical" margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+            <YAxis
+              dataKey="name"
               type="category"
-              width={100}
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-              stroke="hsl(var(--border))"
+              axisLine={false}
+              tickLine={false}
+              width={80}
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+              tickFormatter={(value) => value.length > 10 ? value.substring(0, 10) + '...' : value}
             />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-              }}
-              cursor={{ fill: 'hsl(var(--accent) / 0.1)' }}
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
+            <Bar
+              dataKey="count"
+              fill="hsl(var(--primary))"
+              radius={[0, 4, 4, 0]}
+              barSize={20}
             />
-            <Bar 
-              dataKey="count" 
-              radius={[0, 8, 8, 0]}
-              animationDuration={800}
-            >
-              {data.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={COLORS[index % COLORS.length]}
-                  style={{ cursor: 'pointer' }}
-                />
-              ))}
-            </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </Card>
+      </div>
+
+      <div className="px-5 py-4 border-t border-border text-xs text-muted-foreground">
+        {total} contacts across {sortedData.length} industries
+      </div>
     </motion.div>
   );
 };

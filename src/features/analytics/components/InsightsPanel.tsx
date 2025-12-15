@@ -1,6 +1,5 @@
-import { Card } from '@shared/ui/card';
 import { Insights } from '@analytics/hooks/useAnalyticsData';
-import { TrendingUp, Calendar, Award, Target } from 'lucide-react';
+import { TrendingUp, Calendar, Target, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface InsightsPanelProps {
@@ -10,140 +9,95 @@ interface InsightsPanelProps {
 
 export const InsightsPanel = ({ insights, totalContacts }: InsightsPanelProps) => {
   const getMilestone = (count: number) => {
-    if (count >= 500) return { title: 'Super Connector', emoji: '🌟' };
-    if (count >= 100) return { title: 'Network Champion', emoji: '🏆' };
-    if (count >= 50) return { title: 'Connection Builder', emoji: '🚀' };
-    if (count >= 10) return { title: 'Networking Novice', emoji: '🌱' };
-    return { title: 'Getting Started', emoji: '👋' };
+    if (count >= 500) return { title: 'Super Connector', level: 5 };
+    if (count >= 100) return { title: 'Network Champion', level: 4 };
+    if (count >= 50) return { title: 'Connection Builder', level: 3 };
+    if (count >= 10) return { title: 'Networking Novice', level: 2 };
+    return { title: 'Getting Started', level: 1 };
   };
 
   const milestone = getMilestone(totalContacts);
 
+  const insightItems = [
+    insights.topEvent && {
+      icon: TrendingUp,
+      label: 'Top Event',
+      value: insights.topEvent.name,
+      detail: `${insights.topEvent.count} contacts`,
+    },
+    insights.mostActiveDay !== 'N/A' && {
+      icon: Calendar,
+      label: 'Most Active',
+      value: `${insights.mostActiveDay}s`,
+      detail: 'Best networking day',
+    },
+    insights.networkingStreak > 0 && {
+      icon: Target,
+      label: 'Streak',
+      value: `${insights.networkingStreak} days`,
+      detail: 'Keep it up!',
+    },
+    insights.avgContactsPerEvent > 0 && {
+      icon: Sparkles,
+      label: 'Avg per Event',
+      value: insights.avgContactsPerEvent.toFixed(1),
+      detail: 'contacts average',
+    },
+  ].filter(Boolean);
+
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5, delay: 0.4 }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.2 }}
+      className="rounded-xl border border-border bg-card"
     >
-      <Card className="p-8 hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 border-2">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Award className="h-5 w-5 text-primary" />
+      <div className="p-5 border-b border-border">
+        <span className="text-sm font-medium text-muted-foreground">Insights</span>
+        <div className="flex items-center gap-3 mt-3">
+          <div className="flex gap-0.5">
+            {[1, 2, 3, 4, 5].map((level) => (
+              <div
+                key={level}
+                className={`w-2 h-6 rounded-sm ${
+                  level <= milestone.level ? 'bg-primary' : 'bg-muted'
+                }`}
+              />
+            ))}
           </div>
-          <h3 className="text-xl font-bold">Insights</h3>
+          <div>
+            <p className="text-sm font-medium">{milestone.title}</p>
+            <p className="text-xs text-muted-foreground">{totalContacts} contacts</p>
+          </div>
         </div>
+      </div>
 
-        <div className="space-y-4">
-          {/* Milestone Badge */}
-          <motion.div 
-            className="p-4 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.2 }}
+      <div className="divide-y divide-border">
+        {insightItems.map((item: any, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 + index * 0.05 }}
+            className="flex items-center gap-3 px-5 py-4 hover:bg-muted/30 transition-colors"
           >
-            <div className="flex items-center gap-3">
-              <motion.span 
-                className="text-3xl"
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 3 }}
-              >
-                {milestone.emoji}
-              </motion.span>
-              <div>
-                <p className="font-semibold text-primary">{milestone.title}</p>
-                <p className="text-sm text-muted-foreground">{totalContacts} contacts and counting!</p>
-              </div>
+            <div className="p-2 rounded-lg bg-muted/50">
+              <item.icon className="h-4 w-4 text-muted-foreground" />
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground">{item.label}</p>
+              <p className="text-sm font-medium truncate">{item.value}</p>
+            </div>
+            <span className="text-xs text-muted-foreground">{item.detail}</span>
           </motion.div>
+        ))}
+      </div>
 
-          {/* Key Insights */}
-          <div className="space-y-3">
-            {insights.topEvent && (
-              <motion.div 
-                className="flex items-start gap-3 p-3 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors cursor-default"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <TrendingUp className="h-5 w-5 text-primary mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Top Networking Event</p>
-                  <p className="text-sm text-muted-foreground">
-                    {insights.topEvent.name} ({insights.topEvent.count} contacts)
-                  </p>
-                </div>
-              </motion.div>
-            )}
-
-            {insights.mostActiveDay !== 'N/A' && (
-              <motion.div 
-                className="flex items-start gap-3 p-3 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors cursor-default"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Calendar className="h-5 w-5 text-primary mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Most Active Day</p>
-                  <p className="text-sm text-muted-foreground">
-                    You're most active on {insights.mostActiveDay}s
-                  </p>
-                </div>
-              </motion.div>
-            )}
-
-            {insights.networkingStreak > 0 && (
-              <motion.div 
-                className="flex items-start gap-3 p-3 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors cursor-default"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Target className="h-5 w-5 text-primary mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Networking Streak</p>
-                  <p className="text-sm text-muted-foreground">
-                    {insights.networkingStreak} day{insights.networkingStreak !== 1 ? 's' : ''} streak! 🔥
-                  </p>
-                </div>
-              </motion.div>
-            )}
-
-            {insights.avgContactsPerEvent > 0 && (
-              <motion.div 
-                className="flex items-start gap-3 p-3 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors cursor-default"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <TrendingUp className="h-5 w-5 text-primary mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Average Contacts per Event</p>
-                  <p className="text-sm text-muted-foreground">
-                    {insights.avgContactsPerEvent.toFixed(1)} contacts on average
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Encouragement Message */}
-          {totalContacts > 0 && (
-            <motion.div 
-              className="p-4 rounded-lg bg-gradient-to-br from-accent/20 to-accent/10 border border-border"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-            >
-              <p className="text-sm text-foreground/80 leading-relaxed">
-                {totalContacts < 10 && "🌱 Great start! Keep building your network, one connection at a time."}
-                {totalContacts >= 10 && totalContacts < 50 && "🚀 You're building momentum! Your network is growing steadily."}
-                {totalContacts >= 50 && totalContacts < 100 && "⭐ Impressive network! You're becoming a true connector."}
-                {totalContacts >= 100 && "🏆 Outstanding networking! You're a super connector with an amazing network."}
-              </p>
-            </motion.div>
-          )}
+      {totalContacts > 0 && insightItems.length === 0 && (
+        <div className="p-5 text-center text-sm text-muted-foreground">
+          Add more contacts to unlock insights
         </div>
-      </Card>
+      )}
     </motion.div>
   );
 };
