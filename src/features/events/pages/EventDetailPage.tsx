@@ -5,6 +5,8 @@ import { Badge } from '@shared/ui/badge';
 import { Progress } from '@shared/ui/progress';
 import { Checkbox } from '@shared/ui/checkbox';
 import { Input } from '@shared/ui/input';
+import { Textarea } from '@shared/ui/textarea';
+import { Label } from '@shared/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
 import { ScrollArea } from '@shared/ui/scroll-area';
 import { 
@@ -28,15 +30,15 @@ import {
   Phone,
   Building2,
   Briefcase,
-  Clock,
   MoreHorizontal,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 import { useEventsStore } from '../store/eventsStore';
 import { useNetworkContactsStore } from '@contacts/store/networkContactsStore';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { ViewCardModal } from '@profile/components/SavedCards/ViewCardModal';
 import { toast } from 'sonner';
 import { useSavedCardsStore } from '@profile/store/savedCardsStore';
@@ -74,6 +76,13 @@ interface EventGoal {
   priority?: 'low' | 'medium' | 'high';
 }
 
+interface EditEventForm {
+  name: string;
+  description: string;
+  date: string;
+  location: string;
+}
+
 const EventDetailPage = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
@@ -87,9 +96,17 @@ const EventDetailPage = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteBannerDialog, setShowDeleteBannerDialog] = useState(false);
   const [showEditBannerDialog, setShowEditBannerDialog] = useState(false);
+  const [showEditEventDialog, setShowEditEventDialog] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'contacts' | 'goals'>('overview');
   const [newBannerPreview, setNewBannerPreview] = useState<string | null>(null);
   const [selectedGoalCategory, setSelectedGoalCategory] = useState<'preparation' | 'networking' | 'followup'>('preparation');
+  const [isSaving, setIsSaving] = useState(false);
+  const [editForm, setEditForm] = useState<EditEventForm>({
+    name: '',
+    description: '',
+    date: '',
+    location: '',
+  });
 
   // Mock goals state - in real app, this would come from store
   const [eventGoals, setEventGoals] = useState<EventGoal[]>([
@@ -231,6 +248,44 @@ const EventDetailPage = () => {
 
   const bannerImage = event.imageUrl || defaultBanner;
 
+  // Initialize edit form when opening the dialog
+  const openEditEventDialog = () => {
+    setEditForm({
+      name: event.name,
+      description: event.description || '',
+      date: event.date,
+      location: event.location || '',
+    });
+    setShowEditEventDialog(true);
+  };
+
+  const handleSaveEvent = () => {
+    if (!editForm.name.trim()) {
+      toast.error('Event name is required');
+      return;
+    }
+    if (!editForm.date) {
+      toast.error('Event date is required');
+      return;
+    }
+
+    setIsSaving(true);
+    
+    // Simulate a brief save delay for UX
+    setTimeout(() => {
+      updateEvent(event.id, {
+        name: editForm.name.trim(),
+        description: editForm.description.trim() || undefined,
+        date: editForm.date,
+        location: editForm.location.trim() || undefined,
+      });
+      
+      toast.success('Event updated successfully!');
+      setShowEditEventDialog(false);
+      setIsSaving(false);
+    }, 300);
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader />
@@ -305,7 +360,7 @@ const EventDetailPage = () => {
                     variant="outline"
                     size="icon"
                     className="bg-background/80 backdrop-blur-sm rounded-full shadow-lg"
-                    onClick={() => toast.info('Edit functionality coming soon')}
+                    onClick={openEditEventDialog}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -823,6 +878,84 @@ const EventDetailPage = () => {
             </Button>
             <Button onClick={handleSaveBanner} disabled={!newBannerPreview}>
               Save Banner
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Event Dialog */}
+      <Dialog open={showEditEventDialog} onOpenChange={setShowEditEventDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Event</DialogTitle>
+            <DialogDescription>
+              Update the event details below.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="event-name">Event Name *</Label>
+              <Input
+                id="event-name"
+                placeholder="Enter event name"
+                value={editForm.name}
+                onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="event-date">Date *</Label>
+              <Input
+                id="event-date"
+                type="date"
+                value={editForm.date}
+                onChange={(e) => setEditForm(prev => ({ ...prev, date: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="event-location">Location</Label>
+              <Input
+                id="event-location"
+                placeholder="Enter location"
+                value={editForm.location}
+                onChange={(e) => setEditForm(prev => ({ ...prev, location: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="event-description">Description</Label>
+              <Textarea
+                id="event-description"
+                placeholder="Enter event description"
+                value={editForm.description}
+                onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowEditEventDialog(false)}
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveEvent} 
+              disabled={isSaving || !editForm.name.trim() || !editForm.date}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
