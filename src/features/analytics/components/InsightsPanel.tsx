@@ -1,5 +1,5 @@
 import { Card } from '@shared/ui/card';
-import { Insights } from '@hooks/useAnalyticsData';
+import { Insights } from '@analytics/hooks/useAnalyticsData';
 import { TrendingUp, Calendar, Award, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
 

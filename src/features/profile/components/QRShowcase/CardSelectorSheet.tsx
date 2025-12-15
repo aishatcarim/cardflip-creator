@@ -2,7 +2,7 @@ import { User } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@shared/ui/sheet";
 import { Button } from "@shared/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@shared/ui/avatar";
-import { SavedCard } from "../../../store/savedCardsStore";
+import { SavedCard } from "@profile/store/savedCardsStore";
 import { Badge } from "@shared/ui/badge";
 import { ScrollArea } from "@shared/ui/scroll-area";
 

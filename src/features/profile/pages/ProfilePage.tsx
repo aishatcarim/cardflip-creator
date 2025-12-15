@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QRShowcasePage } from './QRShowcasePage';
 import { CardsPage } from './CardsPage';
+import { SavedCardsPage } from './SavedCardsPage';
 import { AppHeader, Dock, MobileTabBar } from '@shared/components';
 import { useIsMobile } from '@shared/hooks';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
@@ -45,6 +46,7 @@ const ProfilePage = () => {
   const profileNavTabs = [
     { value: "present", label: "Present Mode" },
     { value: "edit", label: "Edit Cards" },
+    { value: "saved", label: "Saved Cards" },
   ];
 
   return (
@@ -62,6 +64,9 @@ const ProfilePage = () => {
           </TabsContent>
           <TabsContent value="edit" className="flex-1 m-0 overflow-hidden data-[state=active]:h-full">
             <CardsPage />
+          </TabsContent>
+          <TabsContent value="saved" className="flex-1 m-0 overflow-hidden data-[state=active]:h-full">
+            <SavedCardsPage />
           </TabsContent>
         </Tabs>
       </main>

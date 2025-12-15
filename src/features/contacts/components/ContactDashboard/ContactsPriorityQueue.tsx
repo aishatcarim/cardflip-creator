@@ -34,7 +34,7 @@ export const ContactsPriorityQueue = ({ contacts }: ContactsPriorityQueueProps) 
       return {
         icon: <Clock className="h-4 w-4" />,
         label: "Due Soon",
-        variant: "warning" as const,
+        variant: "secondary" as const,
         color: "text-orange-500"
       };
     }

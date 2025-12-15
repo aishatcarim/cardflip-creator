@@ -573,7 +573,7 @@ const AnalyticsPage = () => {
                         </div>
                         <div>
                           <p className="text-2xl font-bold">
-                            {new Date(event.eventDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            {new Date(event.mostRecentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </p>
                           <p className="text-xs text-muted-foreground">Date</p>
                         </div>

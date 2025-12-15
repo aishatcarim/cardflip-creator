@@ -5,7 +5,7 @@ import { Button } from '@shared/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@shared/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 import { ScrollArea } from '@shared/ui/scroll-area';
-import { EventData } from '../../../hooks/useEventData';
+import { EventData } from '@events/hooks/useEventData';
 import { TimelineContactCard } from './TimelineContactCard';
 import { useNetworkContactsStore } from '@contacts/store/networkContactsStore';
 import { format, addDays } from 'date-fns';

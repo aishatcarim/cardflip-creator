@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@shared/ui/card';
 import { Button } from '@shared/ui/button';
 import { Avatar, AvatarFallback } from '@shared/ui/avatar';
 import { format } from 'date-fns';
-import { EventData } from '../../../hooks/useEventData';
+import { EventData } from '@events/hooks/useEventData';
 import defaultBanner from '@/assets/event-banners/default-banner.jpg';
 
 interface EventCardProps {

@@ -10,8 +10,6 @@ export { useEventsStore } from './store/eventsStore';
 export { useEventData } from './hooks/useEventData';
 
 // Types
-export type { 
-  Event, 
-  EventData 
-} from './store/eventsStore';
+export type { Event } from './store/eventsStore';
+export type { EventData } from './hooks/useEventData';
 

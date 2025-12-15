@@ -1,6 +1,6 @@
 import { Card } from '@shared/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { IndustryStat } from '@hooks/useAnalyticsData';
+import { IndustryStat } from '@analytics/hooks/useAnalyticsData';
 import { Briefcase } from 'lucide-react';
 import { motion } from 'framer-motion';
 
