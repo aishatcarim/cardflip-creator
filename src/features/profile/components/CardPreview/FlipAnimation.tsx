@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { CardFront } from "./CardFront";
-import { CardBack } from "./CardBack";
+import { TemplateRenderer } from "./TemplateRenderer";
 import { useCardStore } from "@profile/store/cardStore";
 
 export const FlipAnimation = () => {
@@ -25,7 +24,7 @@ export const FlipAnimation = () => {
             backfaceVisibility: "hidden",
           }}
         >
-          <CardFront />
+          <TemplateRenderer side="front" width={400} height={600} />
         </div>
 
         {/* Back */}
@@ -36,7 +35,7 @@ export const FlipAnimation = () => {
             transform: "rotateY(180deg)",
           }}
         >
-          <CardBack />
+          <TemplateRenderer side="back" width={400} height={600} />
         </div>
       </motion.div>
     </div>
