@@ -6,9 +6,11 @@ import { FrontFields } from "../components/CardBuilder/FrontFields";
 import { BackFields } from "../components/CardBuilder/BackFields";
 import { DesignControls } from "../components/CardBuilder/DesignControls";
 import { TemplateSelectorSheet } from "../components/TemplateSelector";
+import { CanvasEditor } from "../components/CanvasEditor";
 import { Button } from "@shared/ui/button";
 import { Badge } from "@shared/ui/badge";
-import { ChevronLeft, ChevronRight, Settings, LayoutTemplate } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@shared/ui/tabs";
+import { ChevronLeft, ChevronRight, Settings, LayoutTemplate, Pencil, Eye } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { SavedCardsList } from "../components/SavedCards/SavedCardsList";
@@ -16,7 +18,7 @@ import { DefaultsSheet } from "../components/SavedCards/DefaultsSheet";
 import { useNavigate } from "react-router-dom";
 
 const CardsPage = () => {
-  const { cardData } = useCardStore();
+  const { cardData, toggleFlip } = useCardStore();
   const { activeTemplateId, getTemplate } = useTemplateStore();
   const { isFlipped } = cardData;
   const [leftCollapsed, setLeftCollapsed] = useState(false);
@@ -25,6 +27,8 @@ const CardsPage = () => {
   const [showDefaults, setShowDefaults] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [currentTab, setCurrentTab] = useState("builder");
+  const [editorMode, setEditorMode] = useState<'preview' | 'canvas'>('preview');
+  const [canvasSide, setCanvasSide] = useState<'front' | 'back'>('front');
   const navigate = useNavigate();
   
   const activeTemplate = activeTemplateId ? getTemplate(activeTemplateId) : null;
@@ -101,7 +105,7 @@ const CardsPage = () => {
 
         {/* Center - Preview */}
         <div className="flex-1 flex flex-col p-8 overflow-y-auto relative">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
             {/* Template indicator */}
             <Button
               variant="outline"
@@ -117,25 +121,61 @@ const CardsPage = () => {
                 Change
               </Badge>
             </Button>
+
+            {/* Mode Toggle */}
+            <Tabs value={editorMode} onValueChange={(v) => setEditorMode(v as 'preview' | 'canvas')}>
+              <TabsList className="h-9">
+                <TabsTrigger value="preview" className="gap-1.5 text-xs">
+                  <Eye className="h-3.5 w-3.5" />
+                  Preview
+                </TabsTrigger>
+                <TabsTrigger value="canvas" className="gap-1.5 text-xs">
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit Layout
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
             
             <CardActions />
           </div>
           
-          <div className="flex-1 flex items-center justify-center">
-            <div className="flex flex-col items-center space-y-6">
-              <div className="card-preview-container">
-                <FlipAnimation />
-              </div>
-              
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">
-                  Currently viewing: <span className="font-medium text-foreground">
-                    {isFlipped ? 'Back Side' : 'Front Side'}
-                  </span>
-                </p>
+          {/* Preview Mode */}
+          {editorMode === 'preview' && (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex flex-col items-center space-y-6">
+                <div className="card-preview-container">
+                  <FlipAnimation />
+                </div>
+                
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Currently viewing: <span className="font-medium text-foreground">
+                      {isFlipped ? 'Back Side' : 'Front Side'}
+                    </span>
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Canvas Editor Mode */}
+          {editorMode === 'canvas' && (
+            <div className="flex-1 flex flex-col items-center">
+              {/* Side Toggle */}
+              <Tabs 
+                value={canvasSide} 
+                onValueChange={(v) => setCanvasSide(v as 'front' | 'back')}
+                className="mb-4"
+              >
+                <TabsList>
+                  <TabsTrigger value="front">Front Side</TabsTrigger>
+                  <TabsTrigger value="back">Back Side</TabsTrigger>
+                </TabsList>
+              </Tabs>
+
+              <CanvasEditor side={canvasSide} width={400} height={600} />
+            </div>
+          )}
         </div>
 
         {/* Right Panel Expand Button (when collapsed) */}
