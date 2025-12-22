@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Canvas as FabricCanvas, FabricObject, IText, Rect } from "fabric";
 import { Input } from "@shared/ui/input";
 import { Label } from "@shared/ui/label";
@@ -16,7 +16,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@shared/ui/collapsible";
-import { ChevronDown, Palette, Type, Move, RotateCw } from "lucide-react";
+import { ChevronDown, Palette, Type, Move, RotateCw, Link2 } from "lucide-react";
+import { DataBindingSelector } from "./DataBindingSelector";
 
 interface PropertiesPanelProps {
   selectedObject: FabricObject;
@@ -137,6 +138,21 @@ export const PropertiesPanel = ({
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Type className="h-3 w-3" />
                   <span>Text</span>
+                </div>
+
+                {/* Data Binding */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs flex items-center gap-1.5">
+                    <Link2 className="h-3 w-3" />
+                    Data Binding
+                  </Label>
+                  <DataBindingSelector
+                    currentBinding={(selectedObject as any).dataBinding}
+                    onSelect={(binding) => {
+                      (selectedObject as any).dataBinding = binding || undefined;
+                      onUpdate();
+                    }}
+                  />
                 </div>
 
                 <div className="space-y-1.5">
