@@ -5,12 +5,12 @@ import { CardActions } from "../components/CardPreview/CardActions";
 import { FrontFields } from "../components/CardBuilder/FrontFields";
 import { BackFields } from "../components/CardBuilder/BackFields";
 import { DesignControls } from "../components/CardBuilder/DesignControls";
-import { TemplateSelectorSheet } from "../components/TemplateSelector";
+import { TemplateSelectorSheet, SaveTemplateDialog } from "../components/TemplateSelector";
 import { CanvasEditor } from "../components/CanvasEditor";
 import { Button } from "@shared/ui/button";
 import { Badge } from "@shared/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@shared/ui/tabs";
-import { ChevronLeft, ChevronRight, Settings, LayoutTemplate, Pencil, Eye } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, LayoutTemplate, Pencil, Eye, Save } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { SavedCardsList } from "../components/SavedCards/SavedCardsList";
@@ -26,6 +26,7 @@ const CardsPage = () => {
   const [showHidden, setShowHidden] = useState(false);
   const [showDefaults, setShowDefaults] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [currentTab, setCurrentTab] = useState("builder");
   const [editorMode, setEditorMode] = useState<'preview' | 'canvas'>('preview');
   const [canvasSide, setCanvasSide] = useState<'front' | 'back'>('front');
@@ -161,17 +162,28 @@ const CardsPage = () => {
           {/* Canvas Editor Mode */}
           {editorMode === 'canvas' && (
             <div className="flex-1 flex flex-col items-center">
-              {/* Side Toggle */}
-              <Tabs 
-                value={canvasSide} 
-                onValueChange={(v) => setCanvasSide(v as 'front' | 'back')}
-                className="mb-4"
-              >
-                <TabsList>
-                  <TabsTrigger value="front">Front Side</TabsTrigger>
-                  <TabsTrigger value="back">Back Side</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              {/* Side Toggle + Save */}
+              <div className="flex items-center gap-3 mb-4">
+                <Tabs 
+                  value={canvasSide} 
+                  onValueChange={(v) => setCanvasSide(v as 'front' | 'back')}
+                >
+                  <TabsList>
+                    <TabsTrigger value="front">Front Side</TabsTrigger>
+                    <TabsTrigger value="back">Back Side</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSaveTemplate(true)}
+                  className="gap-1.5"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  Save Template
+                </Button>
+              </div>
 
               <CanvasEditor side={canvasSide} width={400} height={600} />
             </div>
@@ -256,6 +268,12 @@ const CardsPage = () => {
       <TemplateSelectorSheet 
         open={showTemplates} 
         onOpenChange={setShowTemplates}
+      />
+
+      {/* Save Template Dialog */}
+      <SaveTemplateDialog
+        open={showSaveTemplate}
+        onOpenChange={setShowSaveTemplate}
       />
     </div>
   );
