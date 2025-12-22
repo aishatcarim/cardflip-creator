@@ -55,12 +55,13 @@ export const TemplateGrid = ({ onSelect, showActions = true }: TemplateGridProps
 
   const handleSelect = (template: CardTemplate) => {
     setSelectedTemplate(template.id);
-    onSelect?.(template);
   };
 
   const handleUseTemplate = (template: CardTemplate) => {
     setActiveTemplate(template.id);
     toast.success(`Now using "${template.name}" template`);
+    // Trigger the onSelect callback to close the sheet
+    onSelect?.(template);
   };
 
   const handleDuplicate = (e: React.MouseEvent, id: string) => {
@@ -95,7 +96,7 @@ export const TemplateGrid = ({ onSelect, showActions = true }: TemplateGridProps
               ? 'ring-2 ring-primary shadow-lg' 
               : 'hover:shadow-md border-border'
           } ${isActive ? 'bg-primary/5' : 'bg-card'}`}
-          onClick={() => handleSelect(template)}
+          onClick={() => handleUseTemplate(template)}
         >
           <CardContent className="p-0">
             {/* Template Preview */}
