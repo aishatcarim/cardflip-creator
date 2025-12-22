@@ -16,6 +16,7 @@ import { useEventsStore } from '../store/eventsStore';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AddEventDialog } from '../components/EventActions/AddEventDialog';
+import { LiveEventPanel } from '../components/EventLifecycle/LiveEventPanel';
 import conferenceDefault from '@/assets/event-banners/conference-default.jpg';
 import meetupDefault from '@/assets/event-banners/meetup-default.jpg';
 import workshopDefault from '@/assets/event-banners/workshop-default.jpg';
@@ -471,107 +472,20 @@ const EventsPage = () => {
 
           {/* Live Event */}
           <TabsContent value="live" className="space-y-6">
-            {activeEvent ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="space-y-6"
-              >
-                {/* Event Card */}
-                <div className="rounded-xl border border-border bg-card overflow-hidden">
-                  <div className="h-48 relative overflow-hidden">
-                    <img 
-                      src={activeEvent.bannerUrl || conferenceDefault} 
-                      alt={activeEvent.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center text-white">
-                        <div className="flex items-center justify-center gap-2 mb-2">
-                          <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
-                          <span className="text-sm font-semibold tracking-wide">LIVE NOW</span>
-                        </div>
-                        <h2 className="text-3xl font-bold drop-shadow-lg">{activeEvent.name}</h2>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-8">
-                    <div className="grid grid-cols-3 gap-6 mb-6">
-                      <div className="text-center">
-                        <p className="text-4xl font-bold text-foreground">{activeEvent.currentContacts}</p>
-                        <p className="text-sm text-muted-foreground mt-1">Contacts Made</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-4xl font-bold text-foreground">{activeEvent.goalContacts}</p>
-                        <p className="text-sm text-muted-foreground mt-1">Goal</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-4xl font-bold text-foreground">{Math.round((activeEvent.currentContacts / activeEvent.goalContacts) * 100)}%</p>
-                        <p className="text-sm text-muted-foreground mt-1">Progress</p>
-                      </div>
-                    </div>
-
-                    <Progress
-                      value={(activeEvent.currentContacts / activeEvent.goalContacts) * 100}
-                      className="h-3 mb-6"
-                    />
-
-                    {/* Quick Actions */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Button className="h-20 gap-3" size="lg">
-                        <Users className="h-6 w-6" />
-                        <div className="text-left">
-                          <div className="font-semibold">Quick Tag</div>
-                          <div className="text-xs opacity-90">Scan QR code</div>
-                        </div>
-                      </Button>
-                      <Button variant="outline" className="h-20 gap-3" size="lg">
-                        <Sparkles className="h-6 w-6" />
-                        <div className="text-left">
-                          <div className="font-semibold">AI Note</div>
-                          <div className="text-xs opacity-90">Remember context</div>
-                        </div>
-                      </Button>
-                      <Button variant="outline" className="h-20 gap-3" size="lg">
-                        <Calendar className="h-6 w-6" />
-                        <div className="text-left">
-                          <div className="font-semibold">Schedule</div>
-                          <div className="text-xs opacity-90">Plan follow-up</div>
-                        </div>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ) : (
-              <EmptyState
-                icon={<Sparkles className="h-12 w-12 text-muted-foreground" />}
-                title="No Active Events"
-                description="Activate Event Mode when you arrive at your networking event."
-                action={
-                  mockUpcomingEvents.length > 0 && (
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium mb-4">Ready to activate:</p>
-                      <div className="flex flex-col gap-2">
-                        {mockUpcomingEvents.slice(0, 2).map(event => (
-                          <Button
-                            key={event.id}
-                            variant="outline"
-                            onClick={() => handleActivateEvent(event.id)}
-                            className="gap-2 rounded-full"
-                          >
-                            <Play className="h-4 w-4" />
-                            {event.name}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )
+            <LiveEventPanel
+              activeEvent={activeEvent}
+              upcomingEvents={mockUpcomingEvents}
+              onActivateEvent={handleActivateEvent}
+              onDeactivateEvent={handleDeactivateEvent}
+              onAddContact={() => {
+                if (activeEvent) {
+                  setActiveEvent({
+                    ...activeEvent,
+                    currentContacts: activeEvent.currentContacts + 1
+                  });
                 }
-              />
-            )}
+              }}
+            />
           </TabsContent>
 
           {/* Past Events */}
