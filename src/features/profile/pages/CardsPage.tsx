@@ -1,11 +1,14 @@
 import { useCardStore } from "../store/cardStore";
+import { useTemplateStore } from "../store/templateStore";
 import { FlipAnimation } from "../components/CardPreview/FlipAnimation";
 import { CardActions } from "../components/CardPreview/CardActions";
 import { FrontFields } from "../components/CardBuilder/FrontFields";
 import { BackFields } from "../components/CardBuilder/BackFields";
 import { DesignControls } from "../components/CardBuilder/DesignControls";
+import { TemplateSelectorSheet } from "../components/TemplateSelector";
 import { Button } from "@shared/ui/button";
-import { ChevronLeft, ChevronRight, Settings, LayoutGrid, QrCode, Users, BarChart3, Calendar, Eye, EyeOff } from "lucide-react";
+import { Badge } from "@shared/ui/badge";
+import { ChevronLeft, ChevronRight, Settings, LayoutTemplate } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { SavedCardsList } from "../components/SavedCards/SavedCardsList";
@@ -14,13 +17,17 @@ import { useNavigate } from "react-router-dom";
 
 const CardsPage = () => {
   const { cardData } = useCardStore();
+  const { activeTemplateId, getTemplate } = useTemplateStore();
   const { isFlipped } = cardData;
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
   const [showDefaults, setShowDefaults] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [currentTab, setCurrentTab] = useState("builder");
   const navigate = useNavigate();
+  
+  const activeTemplate = activeTemplateId ? getTemplate(activeTemplateId) : null;
 
 
   return (
@@ -94,7 +101,23 @@ const CardsPage = () => {
 
         {/* Center - Preview */}
         <div className="flex-1 flex flex-col p-8 overflow-y-auto relative">
-          <div className="flex justify-end mb-4">
+          <div className="flex items-center justify-between mb-4">
+            {/* Template indicator */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTemplates(true)}
+              className="gap-2"
+            >
+              <LayoutTemplate className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {activeTemplate?.name || 'Classic Professional'}
+              </span>
+              <Badge variant="secondary" className="text-xs">
+                Change
+              </Badge>
+            </Button>
+            
             <CardActions />
           </div>
           
@@ -189,6 +212,11 @@ const CardsPage = () => {
       {/* Defaults Sheet */}
       <DefaultsSheet open={showDefaults} onOpenChange={setShowDefaults} />
 
+      {/* Template Selector Sheet */}
+      <TemplateSelectorSheet 
+        open={showTemplates} 
+        onOpenChange={setShowTemplates}
+      />
     </div>
   );
 };
