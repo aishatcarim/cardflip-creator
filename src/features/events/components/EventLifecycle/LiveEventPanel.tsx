@@ -15,13 +15,17 @@ import {
   Timer,
   TrendingUp,
   X,
-  Play
+  Play,
+  UserPlus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { cn } from '@lib/utils';
 import { Card } from '@shared/ui/card';
 import conferenceDefault from '@/assets/event-banners/conference-default.jpg';
+import { QuickTagDialog } from './QuickTagDialog';
+import { ScheduleFollowUpDialog } from './ScheduleFollowUpDialog';
+import { useNetworkContactsStore } from '@/features/contacts/store/networkContactsStore';
 
 interface ActiveEvent {
   id: string;
@@ -65,6 +69,11 @@ export const LiveEventPanel = ({
   const [timeRemaining, setTimeRemaining] = useState(activeEvent?.timeRemaining || 0);
   const [showQuickNote, setShowQuickNote] = useState(false);
   const [quickNote, setQuickNote] = useState('');
+  const [showQuickTagDialog, setShowQuickTagDialog] = useState(false);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [sessionContacts, setSessionContacts] = useState<Array<{ name: string; time: string }>>([]);
+
+  const { addContact, bulkUpdateFollowUpStatus, contacts } = useNetworkContactsStore();
 
   useEffect(() => {
     if (activeEvent) {
@@ -84,10 +93,46 @@ export const LiveEventPanel = ({
   }, [activeEvent, timeRemaining]);
 
   const handleQuickTag = () => {
+    setShowQuickTagDialog(true);
+  };
+
+  const handleSaveContact = (contactData: {
+    contactName: string;
+    email?: string;
+    phone?: string;
+    company?: string;
+    title?: string;
+    notes: string;
+    interests: string[];
+  }) => {
+    if (!activeEvent) return;
+
+    addContact({
+      profileCardId: '',
+      contactName: contactData.contactName,
+      email: contactData.email,
+      phone: contactData.phone,
+      company: contactData.company,
+      title: contactData.title,
+      event: activeEvent.name,
+      eventTags: [activeEvent.name],
+      industry: contactData.interests[0] || 'General',
+      interests: contactData.interests,
+      notes: contactData.notes,
+      isQuickTag: true,
+      followUpStatus: 'pending',
+      followUpDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    });
+
     setContactCount(prev => prev + 1);
-    toast.success('Contact tagged!', {
-      description: `${contactCount + 1} contacts collected`,
-      icon: <CheckCircle2 className="h-4 w-4" />,
+    setSessionContacts(prev => [
+      { name: contactData.contactName, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
+      ...prev.slice(0, 4),
+    ]);
+
+    toast.success('Contact added!', {
+      description: `${contactData.contactName} saved to your network`,
+      icon: <UserPlus className="h-4 w-4" />,
     });
     onAddContact();
   };
@@ -102,9 +147,28 @@ export const LiveEventPanel = ({
     }
   };
 
-  const handleScheduleFollowUp = () => {
-    toast.success('Follow-up scheduled', {
-      description: 'Reminder set for tomorrow at 9am',
+  const handleScheduleFollowUp = (data: {
+    date: Date;
+    time: string;
+    reminder: string;
+    notes: string;
+  }) => {
+    if (!activeEvent) return;
+
+    // Get contacts from this event that need follow-up
+    const eventContacts = contacts.filter(
+      c => c.event === activeEvent.name && c.followUpStatus === 'pending'
+    );
+
+    if (eventContacts.length > 0) {
+      bulkUpdateFollowUpStatus(
+        eventContacts.map(c => c.id),
+        'pending'
+      );
+    }
+
+    toast.success('Follow-up scheduled!', {
+      description: `Reminder set for ${data.date.toLocaleDateString()} at ${data.time}`,
       icon: <Calendar className="h-4 w-4" />,
     });
   };
@@ -360,7 +424,7 @@ export const LiveEventPanel = ({
               variant="outline"
               size="lg"
               className="h-16 gap-3 text-left justify-start"
-              onClick={handleScheduleFollowUp}
+              onClick={() => setShowScheduleDialog(true)}
             >
               <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
                 <Calendar className="h-5 w-5 text-accent-foreground" />
@@ -425,6 +489,46 @@ export const LiveEventPanel = ({
           </div>
         </div>
       </Card>
+
+      {/* Recent Session Contacts */}
+      {sessionContacts.length > 0 && (
+        <Card className="p-4">
+          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <UserPlus className="h-4 w-4 text-primary" />
+            Recent Contacts
+          </h3>
+          <div className="space-y-2">
+            {sessionContacts.map((contact, index) => (
+              <motion.div
+                key={`${contact.name}-${index}`}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30"
+              >
+                <span className="text-sm font-medium text-foreground">{contact.name}</span>
+                <span className="text-xs text-muted-foreground">{contact.time}</span>
+              </motion.div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Quick Tag Dialog */}
+      <QuickTagDialog
+        open={showQuickTagDialog}
+        onOpenChange={setShowQuickTagDialog}
+        eventName={activeEvent?.name || ''}
+        onSave={handleSaveContact}
+      />
+
+      {/* Schedule Follow-up Dialog */}
+      <ScheduleFollowUpDialog
+        open={showScheduleDialog}
+        onOpenChange={setShowScheduleDialog}
+        eventName={activeEvent?.name || ''}
+        contactCount={contactCount}
+        onSchedule={handleScheduleFollowUp}
+      />
     </motion.div>
   );
 };
